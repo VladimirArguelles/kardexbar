@@ -1,0 +1,44 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "KardexBar (Chrome Web - Recomendado)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "KardexBar (Edge Web)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "edge",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "KardexBar (Servidor Web Local - http://localhost:8080)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "web-server",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--web-port=8080"
+      ]
+    },
+    {
+      "name": "KardexBar (Chrome Web - Modo Release)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "release",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "KardexBar (Windows Desktop - Requiere Visual Studio C++)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows",
+      "program": "lib/main.dart"
+    }
+  ]
+}

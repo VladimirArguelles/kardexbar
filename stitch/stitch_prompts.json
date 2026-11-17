@@ -1,0 +1,41 @@
+{
+  "project": "KardexBar",
+  "theme": {
+    "style": "Dark Luxury Nightclub & Lounge Bar",
+    "primary": "#FFB703",
+    "background": "#0F1117",
+    "surface": "#161922",
+    "surface_variant": "#1F2432",
+    "cyan_accent": "#00E5FF",
+    "mint_success": "#06D6A0",
+    "coral_alert": "#EF476F",
+    "violet_excess": "#8338EC",
+    "typography": ["Syne", "Inter"]
+  },
+  "screens": [
+    {
+      "id": "screen_pos",
+      "name": "POS & Comandas de Barra",
+      "description": "Punto de venta táctil rápido para bartenders con catálogo filtrable por categoría y gaveta lateral de comanda.",
+      "prompt": "Create a high-contrast dark mode Point-of-Sale (POS) touch interface for a high-volume nightclub bar named 'KardexBar'. The screen must feature: 1. Top Bar: Search bar for beverages, category filter chips (All, Cervezas, Licores, Cócteles, Sin Alcohol, Servicios). 2. Product Grid (2 to 3 columns): Cards featuring beverage title, product code, price highlighted in neon amber (#FFB703), category pill, and recipe deconsolidation preview (e.g., '10x Cerveza Zulia 222ml' for bucket orders). Quantity increment/decrement buttons with haptic feedback. 3. Right-side Comanda / Checkout Drawer: Order items list showing quantity, unit price, and subtotal; Channel selector pills [Barra Principal], [Mesas], [VIP]; Payment method dropdown [USD Cash], [Bolívares], [Pago Móvil], [Punto Tarjeta], [Zelle]; Subtotal, Discount row, and large Total sum display; High-visibility primary action button: 'DESPACHAR Y REGISTRAR' in neon amber with obsidian text. Style: Deep dark obsidian theme (#0F1117), glowing borders, modern rounded corners (16px), clean typography (Syne & Inter)."
+    },
+    {
+      "id": "screen_inventario",
+      "name": "Control de Inventario Físico & Kardex",
+      "description": "Supervisión de stock físico en barra con barra de nivel, alerta de stock mínimo y registro de surtido y roturas.",
+      "prompt": "Design a physical stock and inventory management screen for a bar/disco backroom in 'KardexBar'. Requirements: 1. Search and category pills at the top for quick inventory lookup. 2. List of inventory cards displaying: Insumo name, Category badge, unit of measurement (UND, LATA, COPA), Stock level progress indicator bar (color-coded: mint green #06D6A0 when above minimum, vibrant coral red #EF476F when critical/requires restock), Current stock vs. minimum threshold numbers, Quick Action context menu with options: 'Ingresar Surtido de Bodega' and 'Registrar Merma / Rotura de Botella'. 3. Modal Dialog for Restock / Waste: Numerical keypad entry for quantity, Justification/Notes text field, Confirm action button."
+    },
+    {
+      "id": "screen_cierre",
+      "name": "Cierre de Turno y Arqueo Diario",
+      "description": "Cuadre físico vs teórico por producto, cálculo automático de diferencias (+/-) y cierre definitivo.",
+      "prompt": "Design an automated daily bar closing and physical reconciliation audit screen for 'KardexBar'. Requirements: 1. Top Summary Cards (4 KPIs): Total Audited Products, Exact Matches (#06D6A0), Missing Discrepancies / Faltantes (#EF476F), Excess Stock / Sobrantes (#8338EC). 2. Interactive Reconciliation Table with columns: Insumo / Producto name and code, Stock Inicial, Surtido (+), Ventas/Salidas (-), Stock Teórico, Conteo Físico, Diferencia badge. 3. Shift sign-off footer: Bartender observations text field, Floating action button: 'FINALIZAR Y CERRAR TURNO' in golden amber."
+    },
+    {
+      "id": "screen_dashboard",
+      "name": "Dashboard & Métricas Ejecutivas",
+      "description": "Visión general de ventas del turno, tickets emitidos, estado del servidor Supabase y alertas críticas.",
+      "prompt": "Design a luxury bar executive dashboard screen in dark mode. Requirements: 1. Top Status Banner: 'Supabase PostgreSQL 17 Online' with pulsing green indicator. 2. 4 Metric Cards with micro-charts: Recent Sales Total ($) with growth indicator, Tickets / Comandas Dispatch count, Active Bar Stock count, Critical Low Stock Alert count. 3. Recent Transactions Table: Ticket Number, Timestamp and Payment method pill, Sale channel tag, Total amount in bold amber."
+    }
+  ]
+}

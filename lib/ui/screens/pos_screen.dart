@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
@@ -21,25 +20,43 @@ class PosScreen extends ConsumerStatefulWidget {
 class _PosScreenState extends ConsumerState<PosScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   late final TextEditingController _clienteCtrl;
-  final ScrollController _categoryScrollCtrl = ScrollController();
+  late final TextEditingController _cedulaCtrl;
+  final TextEditingController _buscarClienteBarCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _clienteCtrl = TextEditingController(text: ref.read(posCartProvider).clienteNombre);
+    final cart = ref.read(posCartProvider);
+    _clienteCtrl = TextEditingController(text: cart.clienteNombre);
+    _cedulaCtrl = TextEditingController(text: cart.clienteCedula);
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     _clienteCtrl.dispose();
-    _categoryScrollCtrl.dispose();
+    _cedulaCtrl.dispose();
+    _buscarClienteBarCtrl.dispose();
     super.dispose();
   }
 
-  void _seleccionarCliente(String nombre) {
-    _clienteCtrl.text = nombre;
-    ref.read(posCartProvider.notifier).setClienteNombre(nombre);
+  void _seleccionarCliente(ClienteHistorial cliente) {
+    _clienteCtrl.text = cliente.nombre;
+    _cedulaCtrl.text = cliente.cedula ?? '';
+    _buscarClienteBarCtrl.clear();
+    ref.read(posCartProvider.notifier).setCliente(
+          nombre: cliente.nombre,
+          cedula: cliente.cedula,
+        );
+    setState(() {});
+  }
+
+  void _limpiarCliente() {
+    _clienteCtrl.clear();
+    _cedulaCtrl.clear();
+    _buscarClienteBarCtrl.clear();
+    ref.read(posCartProvider.notifier).setCliente(nombre: '', cedula: '');
+    setState(() {});
   }
 
   void _mostrarDialogoBuscarCliente(BuildContext context) {
@@ -47,7 +64,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       context: context,
       builder: (ctx) => _DialogoBuscarCliente(
         onClienteSeleccionado: (cliente) {
-          _seleccionarCliente(cliente.nombre);
+          _seleccionarCliente(cliente);
         },
       ),
     );
@@ -87,12 +104,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         canal: cart.canal,
         tipoOperacion: cart.tipoOperacion,
         clienteNombre: cart.clienteNombre.isNotEmpty ? cart.clienteNombre : null,
+        clienteCedula: cart.clienteCedula.isNotEmpty ? cart.clienteCedula : null,
         notas: cart.notas.isNotEmpty ? cart.notas : null,
         descuento: cart.descuento,
       );
 
       ref.read(posCartProvider.notifier).limpiarCarrito();
-      _clienteCtrl.clear();
+      _limpiarCliente();
       ref.invalidate(inventarioProductosProvider);
       ref.invalidate(ultimasVentasProvider);
       ref.invalidate(clientesRegistradosProvider);
@@ -126,7 +144,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               const SizedBox(height: 8),
               if (movimiento.clienteNombre != null && movimiento.clienteNombre!.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     children: [
                       const Icon(Icons.person, size: 16, color: AppTheme.secondaryCyan),
@@ -134,6 +152,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       Text(
                         'Cliente: ${movimiento.clienteNombre}',
                         style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              if (movimiento.clienteCedula != null && movimiento.clienteCedula!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.badge_outlined, size: 16, color: AppTheme.textSecondary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Cédula / ID: ${movimiento.clienteCedula}',
+                        style: const TextStyle(color: AppTheme.textSecondary),
                       ),
                     ],
                   ),
@@ -176,12 +208,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final categoriaFiltro = ref.watch(catalogoFiltroCategoriaProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 900;
 
-    // Sincronizar el controlador de texto si el estado cambia externamente (ej: al limpiar comanda)
+    // Sincronizar controladores si el estado del carrito se limpia externamente
     ref.listen<String>(
       posCartProvider.select((s) => s.clienteNombre),
       (prev, next) {
         if (_clienteCtrl.text != next) {
           _clienteCtrl.text = next;
+        }
+      },
+    );
+    ref.listen<String>(
+      posCartProvider.select((s) => s.clienteCedula),
+      (prev, next) {
+        if (_cedulaCtrl.text != next) {
+          _cedulaCtrl.text = next;
         }
       },
     );
@@ -191,14 +231,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         children: [
           // Sección Izquierda: Catálogo de Productos y Filtros
           Expanded(
-            flex: isDesktop ? 6 : 10,
             child: Column(
               children: [
-                // Barra Superior: Búsqueda y Filtros de Categoría
+                // Barra Superior: Búsqueda y Filtros de Categoría con Wrap (sin desbordes)
                 Container(
                   padding: const EdgeInsets.all(16),
                   color: AppTheme.surface,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
@@ -233,86 +273,39 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Filtros Rápidos de Categorías con navegación fluida y sin desbordes
-                      Row(
+                      // Filtros de Categoría con Wrap: Se adaptan a cualquier ancho sin recortarse ni desbordar
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            icon: const Icon(Icons.chevron_left, color: AppTheme.textSecondary, size: 20),
-                            tooltip: 'Desplazar a la izquierda',
-                            onPressed: () {
-                              _categoryScrollCtrl.animateTo(
-                                (_categoryScrollCtrl.offset - 200).clamp(0.0, _categoryScrollCtrl.position.maxScrollExtent),
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOut,
-                              );
+                          FilterChip(
+                            label: const Text('Todos'),
+                            selected: categoriaFiltro == null,
+                            onSelected: (_) {
+                              ref.read(catalogoFiltroCategoriaProvider.notifier).state = null;
                             },
-                          ),
-                          Expanded(
-                            child: ScrollConfiguration(
-                              behavior: const MaterialScrollBehavior().copyWith(
-                                dragDevices: {
-                                  PointerDeviceKind.mouse,
-                                  PointerDeviceKind.touch,
-                                  PointerDeviceKind.stylus,
-                                  PointerDeviceKind.trackpad,
-                                },
-                              ),
-                              child: SingleChildScrollView(
-                                controller: _categoryScrollCtrl,
-                                scrollDirection: Axis.horizontal,
-                                physics: const BouncingScrollPhysics(),
-                                child: Row(
-                                  children: [
-                                    FilterChip(
-                                      label: const Text('Todos'),
-                                      selected: categoriaFiltro == null,
-                                      onSelected: (_) {
-                                        ref.read(catalogoFiltroCategoriaProvider.notifier).state = null;
-                                      },
-                                      selectedColor: AppTheme.primaryAmber,
-                                      labelStyle: TextStyle(
-                                        color: categoriaFiltro == null ? Colors.black : AppTheme.textPrimary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    ...CategoriaProducto.values.map((cat) {
-                                      final isSel = categoriaFiltro == cat;
-                                      return Padding(
-                                        padding: const EdgeInsets.only(right: 8),
-                                        child: FilterChip(
-                                          label: Text(cat.label),
-                                          selected: isSel,
-                                          onSelected: (_) {
-                                            ref.read(catalogoFiltroCategoriaProvider.notifier).state =
-                                                isSel ? null : cat;
-                                          },
-                                          selectedColor: AppTheme.primaryAmber,
-                                          labelStyle: TextStyle(
-                                            color: isSel ? Colors.black : AppTheme.textPrimary,
-                                            fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                  ],
-                                ),
-                              ),
+                            selectedColor: AppTheme.primaryAmber,
+                            labelStyle: TextStyle(
+                              color: categoriaFiltro == null ? Colors.black : AppTheme.textPrimary,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            icon: const Icon(Icons.chevron_right, color: AppTheme.textSecondary, size: 20),
-                            tooltip: 'Desplazar a la derecha',
-                            onPressed: () {
-                              _categoryScrollCtrl.animateTo(
-                                (_categoryScrollCtrl.offset + 200).clamp(0.0, _categoryScrollCtrl.position.maxScrollExtent),
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOut,
-                              );
-                            },
-                          ),
+                          ...CategoriaProducto.values.map((cat) {
+                            final isSel = categoriaFiltro == cat;
+                            return FilterChip(
+                              label: Text(cat.label),
+                              selected: isSel,
+                              onSelected: (_) {
+                                ref.read(catalogoFiltroCategoriaProvider.notifier).state =
+                                    isSel ? null : cat;
+                              },
+                              selectedColor: AppTheme.primaryAmber,
+                              labelStyle: TextStyle(
+                                color: isSel ? Colors.black : AppTheme.textPrimary,
+                                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ],
@@ -384,7 +377,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           // Sección Derecha: Ticket / Carrito POS
           if (isDesktop)
             Container(
-              width: 390,
+              width: 420,
               decoration: const BoxDecoration(
                 color: AppTheme.surface,
                 border: Border(left: BorderSide(color: AppTheme.borderLight)),
@@ -404,7 +397,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     isScrollControlled: true,
                     backgroundColor: AppTheme.surface,
                     builder: (ctx) => SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.85,
+                      height: MediaQuery.of(context).size.height * 0.90,
                       child: _buildComandaSidebar(context, cart),
                     ),
                   );
@@ -470,143 +463,301 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 TextButton(
                   onPressed: () {
                     ref.read(posCartProvider.notifier).limpiarCarrito();
-                    _clienteCtrl.clear();
+                    _limpiarCliente();
                   },
                   child: const Text('Limpiar', style: TextStyle(color: AppTheme.errorCoral)),
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // WIDGET CLIENTE: Campo de Nombre con Buscador Integrado
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _clienteCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Cliente / Mesa / Referencia',
-                  hintText: 'Ej: Carlos Mendoza, Mesa 4...',
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  prefixIcon: const Icon(Icons.person_outline_rounded, color: AppTheme.primaryAmber, size: 20),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_clienteCtrl.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear, size: 18, color: AppTheme.textMuted),
-                          tooltip: 'Limpiar nombre',
-                          onPressed: () {
-                            _clienteCtrl.clear();
-                            ref.read(posCartProvider.notifier).setClienteNombre('');
-                          },
+          // SECCIÓN: DATOS DEL CLIENTE Y BUSCADOR POR NOMBRE O CÉDULA
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceVariant.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderLight),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Cabecera del widget de cliente
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.badge_outlined, size: 16, color: AppTheme.primaryAmber),
+                        SizedBox(width: 6),
+                        Text(
+                          'Datos del Cliente',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
-                      IconButton(
-                        icon: const Icon(Icons.person_search_rounded, color: AppTheme.secondaryCyan, size: 22),
-                        tooltip: 'Buscar cliente con compras registradas',
-                        onPressed: () => _mostrarDialogoBuscarCliente(context),
+                      ],
+                    ),
+                    if (cart.clienteNombre.isNotEmpty || cart.clienteCedula.isNotEmpty)
+                      InkWell(
+                        onTap: _limpiarCliente,
+                        child: const Text(
+                          'Limpiar',
+                          style: TextStyle(fontSize: 11, color: AppTheme.errorCoral),
+                        ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-                onChanged: (val) {
-                  ref.read(posCartProvider.notifier).setClienteNombre(val);
-                },
-              ),
+                const SizedBox(height: 8),
 
-              // Chips de sugerencia rápida si el campo está vacío, o confirmación si coincide con un cliente registrado
-              clientesAsync.maybeWhen(
-                data: (clientes) {
-                  if (clientes.isEmpty) return const SizedBox.shrink();
-
-                  // Si el cliente actual coincide con uno registrado, mostrar insignia con sus compras
-                  final match = clientes.cast<ClienteHistorial?>().firstWhere(
-                        (c) => c?.nombre.trim().toLowerCase() == cart.clienteNombre.trim().toLowerCase(),
-                        orElse: () => null,
-                      );
-
-                  if (match != null && cart.clienteNombre.isNotEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.secondaryCyan.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppTheme.secondaryCyan.withValues(alpha: 0.3)),
+                // 1. Barra de Búsqueda Interactiva por Nombre o Cédula
+                TextField(
+                  controller: _buscarClienteBarCtrl,
+                  style: const TextStyle(fontSize: 12),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    hintText: 'Buscar cliente por Nombre o Cédula (V-...)...',
+                    hintStyle: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                    prefixIcon: const Icon(Icons.person_search_rounded, color: AppTheme.secondaryCyan, size: 18),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_buscarClienteBarCtrl.text.isNotEmpty)
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            icon: const Icon(Icons.clear, size: 16, color: AppTheme.textMuted),
+                            onPressed: () {
+                              _buscarClienteBarCtrl.clear();
+                              setState(() {});
+                            },
+                          ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.manage_search_rounded, color: AppTheme.primaryAmber, size: 20),
+                          tooltip: 'Abrir directorio de clientes',
+                          onPressed: () => _mostrarDialogoBuscarCliente(context),
                         ),
+                      ],
+                    ),
+                  ),
+                  onChanged: (val) {
+                    setState(() {});
+                  },
+                ),
+
+                // Lista desplegable de sugerencias de clientes cuando se escribe en el buscador
+                if (_buscarClienteBarCtrl.text.trim().isNotEmpty)
+                  clientesAsync.maybeWhen(
+                    data: (clientes) {
+                      final query = _buscarClienteBarCtrl.text.trim().toLowerCase();
+                      final sugerencias = clientes.where((c) {
+                        final nMatch = c.nombre.toLowerCase().contains(query);
+                        final cMatch = c.cedula?.toLowerCase().contains(query) ?? false;
+                        return nMatch || cMatch;
+                      }).take(4).toList();
+
+                      if (sugerencias.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 13, color: AppTheme.textMuted),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Sin coincidencias previas. Ingrese los datos abajo.',
+                                  style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Container(
+                        margin: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.borderLight),
+                        ),
+                        child: Column(
+                          children: sugerencias.map((cl) {
+                            return InkWell(
+                              onTap: () => _seleccionarCliente(cl),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.person, size: 14, color: AppTheme.secondaryCyan),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        cl.nombre,
+                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (cl.cedula != null && cl.cedula!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                                        child: Text(
+                                          cl.cedula!,
+                                          style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
+                                        ),
+                                      ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryAmber.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '${cl.totalCompras} comp.',
+                                        style: const TextStyle(fontSize: 9, color: AppTheme.primaryAmber, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+
+                const SizedBox(height: 8),
+
+                // 2. Campos de Nombre de Cliente y Cédula
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 6,
+                      child: TextField(
+                        controller: _clienteCtrl,
+                        style: const TextStyle(fontSize: 12),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          labelText: 'Nombre del Cliente',
+                          hintText: 'Ej. Carlos Mendoza...',
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          prefixIcon: Icon(Icons.person_outline, size: 16, color: AppTheme.primaryAmber),
+                        ),
+                        onChanged: (val) {
+                          ref.read(posCartProvider.notifier).setClienteNombre(val);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      flex: 4,
+                      child: TextField(
+                        controller: _cedulaCtrl,
+                        style: const TextStyle(fontSize: 12),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          labelText: 'Cédula / RIF',
+                          hintText: 'V-18452123',
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          prefixIcon: Icon(Icons.credit_card, size: 16, color: AppTheme.secondaryCyan),
+                        ),
+                        onChanged: (val) {
+                          ref.read(posCartProvider.notifier).setClienteCedula(val);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                // 3. Insignia si coincide con cliente registrado o chips de acceso rápido
+                clientesAsync.maybeWhen(
+                  data: (clientes) {
+                    if (clientes.isEmpty) return const SizedBox.shrink();
+
+                    final match = clientes.cast<ClienteHistorial?>().firstWhere(
+                          (c) =>
+                              (cart.clienteNombre.isNotEmpty &&
+                                  c?.nombre.trim().toLowerCase() == cart.clienteNombre.trim().toLowerCase()) ||
+                              (cart.clienteCedula.isNotEmpty &&
+                                  c?.cedula?.trim().toLowerCase() == cart.clienteCedula.trim().toLowerCase()),
+                          orElse: () => null,
+                        );
+
+                    if (match != null && cart.clienteNombre.isNotEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.verified_rounded, size: 14, color: AppTheme.secondaryCyan),
-                            const SizedBox(width: 5),
-                            Text(
-                              'Cliente registrado: ${match.totalCompras} ${match.totalCompras == 1 ? 'compra' : 'compras'} previas',
-                              style: const TextStyle(color: AppTheme.secondaryCyan, fontSize: 11, fontWeight: FontWeight.w600),
+                            const Icon(Icons.verified_rounded, size: 14, color: AppTheme.successMint),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Cliente registrado: ${match.totalCompras} ${match.totalCompras == 1 ? 'compra previa' : 'compras previas'}${match.cedula != null ? ' • C.I: ${match.cedula}' : ''}',
+                                style: const TextStyle(color: AppTheme.successMint, fontSize: 10, fontWeight: FontWeight.w600),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  // Si el campo está vacío, mostrar accesos rápidos a los clientes frecuentes
-                  if (cart.clienteNombre.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            const Text(
-                              'Frecuentes: ',
-                              style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                            ),
-                            ...clientes.take(3).map((cl) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 6),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () => _seleccionarCliente(cl.nombre),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.surfaceVariant,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: AppTheme.borderLight),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.history, size: 12, color: AppTheme.primaryAmber),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          cl.nombre,
-                                          style: const TextStyle(
-                                            color: AppTheme.textPrimary,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                    if (cart.clienteNombre.isEmpty && cart.clienteCedula.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              const Text(
+                                'Frecuentes: ',
+                                style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                              ),
+                              ...clientes.take(3).map((cl) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(10),
+                                    onTap: () => _seleccionarCliente(cl),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.surface,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: AppTheme.borderLight),
+                                      ),
+                                      child: Text(
+                                        '${cl.nombre}${cl.cedula != null ? ' (${cl.cedula})' : ''}',
+                                        style: const TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 10,
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }),
-                          ],
+                                );
+                              }),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  return const SizedBox.shrink();
-                },
-                orElse: () => const SizedBox.shrink(),
-              ),
-            ],
+                    return const SizedBox.shrink();
+                  },
+                  orElse: () => const SizedBox.shrink(),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Selectores: Canal de Venta y Método de Pago (Con isExpanded: true y elisión para evitar desbordes)
           Row(
@@ -665,7 +816,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           const Divider(color: AppTheme.borderLight, height: 1),
 
           // Lista de ítems en carrito
@@ -722,7 +873,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
 
           const Divider(color: AppTheme.borderLight, height: 1),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Totales y Cobro
           Column(
@@ -764,7 +915,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               SizedBox(
                 width: double.infinity,
@@ -791,7 +942,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 }
 
-/// Diálogo modal interactivo para buscar clientes registrados con compras previas
+/// Diálogo modal interactivo para buscar clientes registrados con compras previas (por Nombre o Cédula)
 class _DialogoBuscarCliente extends ConsumerStatefulWidget {
   final Function(ClienteHistorial cliente) onClienteSeleccionado;
 
@@ -821,7 +972,7 @@ class _DialogoBuscarClienteState extends ConsumerState<_DialogoBuscarCliente> {
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 550, maxHeight: 580),
+        constraints: const BoxConstraints(maxWidth: 580, maxHeight: 600),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -846,7 +997,7 @@ class _DialogoBuscarClienteState extends ConsumerState<_DialogoBuscarCliente> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
                           Text(
-                            'Buscar Cliente Registrado',
+                            'Directorio de Clientes Registrados',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -854,7 +1005,7 @@ class _DialogoBuscarClienteState extends ConsumerState<_DialogoBuscarCliente> {
                             ),
                           ),
                           Text(
-                            'Historial de clientes con compras previas en barra',
+                            'Búsqueda por Nombre o Número de Cédula / RIF',
                             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                           ),
                         ],
@@ -869,12 +1020,12 @@ class _DialogoBuscarClienteState extends ConsumerState<_DialogoBuscarCliente> {
               ),
               const SizedBox(height: 16),
 
-              // Campo de búsqueda en vivo
+              // Campo de búsqueda en vivo (Nombre o Cédula)
               TextField(
                 controller: _dialogSearchCtrl,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: 'Buscar por nombre de cliente o ticket...',
+                  hintText: 'Escribe Nombre del cliente o Cédula (V-...)...',
                   prefixIcon: const Icon(Icons.search, color: AppTheme.secondaryCyan),
                   suffixIcon: _dialogSearchCtrl.text.isNotEmpty
                       ? IconButton(
@@ -899,8 +1050,9 @@ class _DialogoBuscarClienteState extends ConsumerState<_DialogoBuscarCliente> {
                     final filtrados = clientes.where((c) {
                       if (_filter.isEmpty) return true;
                       final matchNombre = c.nombre.toLowerCase().contains(_filter);
+                      final matchCedula = c.cedula?.toLowerCase().contains(_filter) ?? false;
                       final matchTicket = c.ultimoTicket?.toLowerCase().contains(_filter) ?? false;
-                      return matchNombre || matchTicket;
+                      return matchNombre || matchCedula || matchTicket;
                     }).toList();
 
                     if (filtrados.isEmpty) {
@@ -974,6 +1126,24 @@ class _DialogoBuscarClienteState extends ConsumerState<_DialogoBuscarCliente> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              if (item.cedula != null && item.cedula!.isNotEmpty)
+                                Container(
+                                  margin: const EdgeInsets.only(right: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.secondaryCyan.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppTheme.secondaryCyan.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Text(
+                                    item.cedula!,
+                                    style: const TextStyle(
+                                      color: AppTheme.secondaryCyan,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(

@@ -64,6 +64,7 @@ class VentasService {
     required CanalVenta canal,
     TipoOperacionVenta tipoOperacion = TipoOperacionVenta.venta,
     String? clienteNombre,
+    String? clienteCedula,
     String? notas,
     double descuento = 0.0,
   }) async {
@@ -93,6 +94,7 @@ class VentasService {
           'descuento': descuento,
           'total': total,
           'cliente_nombre': clienteNombre,
+          'cliente_cedula': clienteCedula,
           'notas': notas,
         })
         .select()
@@ -128,12 +130,13 @@ class VentasService {
     return (data as List).map((e) => Movimiento.fromJson(e)).toList();
   }
 
-  /// Obtiene los clientes con compras registradas previamente
+  /// Obtiene los clientes con compras registradas previamente (búsqueda por nombre o cédula)
   Future<List<ClienteHistorial>> getClientesConCompras({String? search}) async {
     try {
       var query = _client.from('vista_clientes_resumen').select();
       if (search != null && search.trim().isNotEmpty) {
-        query = query.ilike('cliente_nombre', '%${search.trim()}%');
+        final term = search.trim();
+        query = query.or('cliente_nombre.ilike.%$term%,cliente_cedula.ilike.%$term%');
       }
       final data = await query.order('ultima_compra', ascending: false).limit(50);
       return (data as List).map((e) => ClienteHistorial.fromJson(e)).toList();
@@ -142,11 +145,12 @@ class VentasService {
       try {
         var query = _client
             .from('movimientos')
-            .select('cliente_nombre, numero_ticket, total, fecha_operacion')
+            .select('cliente_nombre, cliente_cedula, numero_ticket, total, fecha_operacion')
             .not('cliente_nombre', 'is', null)
             .neq('cliente_nombre', '');
         if (search != null && search.trim().isNotEmpty) {
-          query = query.ilike('cliente_nombre', '%${search.trim()}%');
+          final term = search.trim();
+          query = query.or('cliente_nombre.ilike.%$term%,cliente_cedula.ilike.%$term%');
         }
         final data = await query.order('fecha_operacion', ascending: false).limit(100);
 
@@ -167,6 +171,7 @@ class VentasService {
           }
           list.add(ClienteHistorial(
             nombre: name,
+            cedula: first['cliente_cedula'] as String?,
             totalCompras: rows.length,
             ultimaCompra: first['fecha_operacion'] != null
                 ? DateTime.tryParse(first['fecha_operacion'] as String)

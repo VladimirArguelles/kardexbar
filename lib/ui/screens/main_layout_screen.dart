@@ -35,27 +35,28 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 68,
         title: Row(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               child: Image.asset(
                 'assets/images/logo.png',
-                height: 38,
+                height: 52,
                 fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             Container(
-              height: 22,
+              height: 28,
               width: 1,
               color: AppTheme.borderLight,
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             Text(
               _titles[_currentIndex],
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: AppTheme.textSecondary,
                 fontWeight: FontWeight.w500,
               ),

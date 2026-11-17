@@ -22,6 +22,7 @@ class PosCartState {
   final CanalVenta canal;
   final TipoOperacionVenta tipoOperacion;
   final String clienteNombre;
+  final String clienteCedula;
   final String notas;
   final double descuento;
   final bool isLoading;
@@ -32,6 +33,7 @@ class PosCartState {
     this.canal = CanalVenta.barra,
     this.tipoOperacion = TipoOperacionVenta.venta,
     this.clienteNombre = '',
+    this.clienteCedula = '',
     this.notas = '',
     this.descuento = 0.0,
     this.isLoading = false,
@@ -51,6 +53,7 @@ class PosCartState {
     CanalVenta? canal,
     TipoOperacionVenta? tipoOperacion,
     String? clienteNombre,
+    String? clienteCedula,
     String? notas,
     double? descuento,
     bool? isLoading,
@@ -61,6 +64,7 @@ class PosCartState {
       canal: canal ?? this.canal,
       tipoOperacion: tipoOperacion ?? this.tipoOperacion,
       clienteNombre: clienteNombre ?? this.clienteNombre,
+      clienteCedula: clienteCedula ?? this.clienteCedula,
       notas: notas ?? this.notas,
       descuento: descuento ?? this.descuento,
       isLoading: isLoading ?? this.isLoading,
@@ -107,6 +111,9 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
   void setCanal(CanalVenta c) => state = state.copyWith(canal: c);
   void setTipoOperacion(TipoOperacionVenta t) => state = state.copyWith(tipoOperacion: t);
   void setClienteNombre(String c) => state = state.copyWith(clienteNombre: c);
+  void setClienteCedula(String c) => state = state.copyWith(clienteCedula: c);
+  void setCliente({required String nombre, String? cedula}) =>
+      state = state.copyWith(clienteNombre: nombre, clienteCedula: cedula ?? '');
   void setNotas(String n) => state = state.copyWith(notas: n);
   void setDescuento(double d) => state = state.copyWith(descuento: d);
   void setLoading(bool loading) => state = state.copyWith(isLoading: loading);

@@ -3,19 +3,23 @@
 -- Archivo: supabase/migrations/20261117000002_vista_clientes_y_politicas_anon.sql
 -- ==============================================================================
 
--- 1. Vista para consultar clientes con compras previas registradas
+-- 1. Soporte para cédula/identificación del cliente en movimientos
+ALTER TABLE public.movimientos ADD COLUMN IF NOT EXISTS cliente_cedula TEXT;
+
+-- 2. Vista para consultar clientes con compras previas registradas (por nombre o cédula)
 CREATE OR REPLACE VIEW public.vista_clientes_resumen AS
 SELECT 
     cliente_nombre,
     count(*)::integer AS total_compras,
     max(fecha_operacion) AS ultima_compra,
     sum(total)::numeric(12,2) AS total_gastado,
-    (array_agg(numero_ticket ORDER BY fecha_operacion DESC))[1] AS ultimo_ticket
+    (array_agg(numero_ticket ORDER BY fecha_operacion DESC))[1] AS ultimo_ticket,
+    (array_agg(cliente_cedula ORDER BY fecha_operacion DESC) FILTER (WHERE cliente_cedula IS NOT NULL AND trim(cliente_cedula) != ''))[1] AS cliente_cedula
 FROM public.movimientos
 WHERE cliente_nombre IS NOT NULL AND trim(cliente_nombre) != ''
 GROUP BY cliente_nombre;
 
--- 2. Políticas RLS para permitir operaciones del POS bajo rol anon
+-- 3. Políticas RLS para permitir operaciones del POS bajo rol anon
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'movimientos_select_anon') THEN

@@ -114,6 +114,7 @@ class Movimiento {
   final double descuento;
   final double total;
   final String? clienteNombre;
+  final String? clienteCedula;
   final String? notas;
   final String? usuarioId;
   final List<DetalleMovimiento> detalles;
@@ -130,6 +131,7 @@ class Movimiento {
     required this.descuento,
     required this.total,
     this.clienteNombre,
+    this.clienteCedula,
     this.notas,
     this.usuarioId,
     this.detalles = const [],
@@ -158,6 +160,7 @@ class Movimiento {
       descuento: (json['descuento'] as num?)?.toDouble() ?? 0.0,
       total: (json['total'] as num?)?.toDouble() ?? 0.0,
       clienteNombre: json['cliente_nombre'] as String?,
+      clienteCedula: json['cliente_cedula'] as String?,
       notas: json['notas'] as String?,
       usuarioId: json['usuario_id'] as String?,
       detalles: dList,

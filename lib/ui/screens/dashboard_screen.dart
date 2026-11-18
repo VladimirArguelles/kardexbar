@@ -21,40 +21,23 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             // Bienvenida y Estado del Sistema
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Panel de Control KardexBar',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Monitoreo en vivo de ventas, kardex y barra',
-                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.successMint.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.successMint.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.circle, color: AppTheme.successMint, size: 8),
-                      SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        'Supabase PostgreSQL 17 Online',
-                        style: TextStyle(
-                          color: AppTheme.successMint,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        'Panel de Control KardexBar',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Monitoreo en vivo de ventas, kardex y barra',
+                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -74,48 +57,73 @@ class DashboardScreen extends ConsumerWidget {
                     final int bajoMinimo =
                         productos.where((p) => p.requiereReabastecimiento).length;
 
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: MetricCard(
-                            title: 'Ventas Recientes',
-                            value: Formatters.currency(totalVendido),
-                            subtitle: '${ventas.length} comandas procesadas',
-                            icon: Icons.attach_money_rounded,
-                            accentColor: AppTheme.primaryAmber,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: MetricCard(
-                            title: 'Comandas Confirmadas',
-                            value: '${ventas.length}',
-                            subtitle: 'Despachos de barra',
-                            icon: Icons.receipt_long_rounded,
-                            accentColor: AppTheme.secondaryCyan,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: MetricCard(
-                            title: 'Insumos en Barra',
-                            value: '${productos.length}',
-                            subtitle: 'Catálogo inventariable',
-                            icon: Icons.liquor_rounded,
-                            accentColor: AppTheme.infoViolet,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: MetricCard(
-                            title: 'Stock Crítico',
-                            value: '$bajoMinimo',
-                            subtitle: bajoMinimo > 0 ? 'Requiere surtido urgente' : 'Niveles óptimos',
-                            icon: Icons.warning_amber_rounded,
-                            accentColor: bajoMinimo > 0 ? AppTheme.errorCoral : AppTheme.successMint,
-                          ),
-                        ),
-                      ],
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isCompact = constraints.maxWidth < 750;
+
+                        final cardVentas = MetricCard(
+                          title: 'Ventas Recientes',
+                          value: Formatters.currency(totalVendido),
+                          subtitle: '${ventas.length} comandas procesadas',
+                          icon: Icons.attach_money_rounded,
+                          accentColor: AppTheme.primaryAmber,
+                        );
+                        final cardComandas = MetricCard(
+                          title: 'Comandas Confirmadas',
+                          value: '${ventas.length}',
+                          subtitle: 'Despachos de barra',
+                          icon: Icons.receipt_long_rounded,
+                          accentColor: AppTheme.secondaryCyan,
+                        );
+                        final cardInsumos = MetricCard(
+                          title: 'Insumos en Barra',
+                          value: '${productos.length}',
+                          subtitle: 'Catálogo inventariable',
+                          icon: Icons.liquor_rounded,
+                          accentColor: AppTheme.infoViolet,
+                        );
+                        final cardStock = MetricCard(
+                          title: 'Stock Crítico',
+                          value: '$bajoMinimo',
+                          subtitle: bajoMinimo > 0 ? 'Requiere surtido urgente' : 'Niveles óptimos',
+                          icon: Icons.warning_amber_rounded,
+                          accentColor: bajoMinimo > 0 ? AppTheme.errorCoral : AppTheme.successMint,
+                        );
+
+                        if (isCompact) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(child: cardVentas),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: cardComandas),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(child: cardInsumos),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: cardStock),
+                                ],
+                              ),
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(child: cardVentas),
+                            const SizedBox(width: 14),
+                            Expanded(child: cardComandas),
+                            const SizedBox(width: 14),
+                            Expanded(child: cardInsumos),
+                            const SizedBox(width: 14),
+                            Expanded(child: cardStock),
+                          ],
+                        );
+                      },
                     );
                   },
                   loading: () => const LinearProgressIndicator(color: AppTheme.primaryAmber),
@@ -180,11 +188,14 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                         title: Row(
                           children: [
-                            Text(
-                              mov.numeroTicket,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
+                            Flexible(
+                              child: Text(
+                                mov.numeroTicket,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -208,6 +219,8 @@ class DashboardScreen extends ConsumerWidget {
                         subtitle: Text(
                           '${Formatters.dateTime(mov.fechaOperacion)} • Pago: ${mov.metodoPago.label}',
                           style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         trailing: Text(
                           Formatters.currency(mov.total),

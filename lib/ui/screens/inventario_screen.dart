@@ -161,44 +161,51 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      FilterChip(
-                        label: const Text('Todos'),
-                        selected: categoriaFiltro == null,
-                        onSelected: (_) {
-                          ref.read(inventarioFiltroCategoriaProvider.notifier).state = null;
-                        },
-                        selectedColor: AppTheme.primaryAmber,
-                        labelStyle: TextStyle(
-                          color: categoriaFiltro == null ? Colors.black : AppTheme.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ...CategoriaProducto.values.map((cat) {
-                        final isSel = categoriaFiltro == cat;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(cat.label),
-                            selected: isSel,
-                            onSelected: (_) {
-                              ref.read(inventarioFiltroCategoriaProvider.notifier).state =
-                                  isSel ? null : cat;
-                            },
-                            selectedColor: AppTheme.primaryAmber,
-                            labelStyle: TextStyle(
-                              color: isSel ? Colors.black : AppTheme.textPrimary,
-                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
+                DropdownButtonFormField<String>(
+                  key: ValueKey(categoriaFiltro),
+                  initialValue: categoriaFiltro?.name ?? 'TODOS',
+                  isExpanded: true,
+                  dropdownColor: AppTheme.surface,
+                  style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    filled: true,
+                    fillColor: AppTheme.surfaceVariant,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppTheme.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppTheme.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppTheme.primaryAmber),
+                    ),
+                    prefixIcon: const Icon(Icons.category_outlined, color: AppTheme.primaryAmber, size: 20),
                   ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: 'TODOS',
+                      child: Text('Todas las categorías', overflow: TextOverflow.ellipsis),
+                    ),
+                    ...CategoriaProducto.values.map(
+                      (cat) => DropdownMenuItem<String>(
+                        value: cat.name,
+                        child: Text(cat.label, overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val == null || val == 'TODOS') {
+                      ref.read(inventarioFiltroCategoriaProvider.notifier).state = null;
+                    } else {
+                      ref.read(inventarioFiltroCategoriaProvider.notifier).state =
+                          CategoriaProducto.values.firstWhere((c) => c.name == val);
+                    }
+                  },
                 ),
               ],
             ),
@@ -256,12 +263,16 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(
-                                        p.nombre,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.textPrimary,
+                                      Flexible(
+                                        child: Text(
+                                          p.nombre,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.textPrimary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                       if (bajoMinimo) ...[

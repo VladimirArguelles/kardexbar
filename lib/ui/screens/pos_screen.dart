@@ -70,6 +70,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
+  void _abrirComanda(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Consumer(
+        builder: (context, ref, _) {
+          return SizedBox(
+            height: MediaQuery.of(context).size.height * 0.90,
+            child: _buildComandaSidebar(context),
+          );
+        },
+      ),
+    );
+  }
+
   void _procesarVenta() async {
     final cart = ref.read(posCartProvider);
     if (cart.items.isEmpty) {
@@ -273,39 +292,81 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Filtros de Categoría con Wrap: Se adaptan a cualquier ancho sin recortarse ni desbordar
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                      // Filtro de Categoría Dropdown y Acceso a Comanda con Badge
+                      Row(
                         children: [
-                          FilterChip(
-                            label: const Text('Todos'),
-                            selected: categoriaFiltro == null,
-                            onSelected: (_) {
-                              ref.read(catalogoFiltroCategoriaProvider.notifier).state = null;
-                            },
-                            selectedColor: AppTheme.primaryAmber,
-                            labelStyle: TextStyle(
-                              color: categoriaFiltro == null ? Colors.black : AppTheme.textPrimary,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              key: ValueKey(categoriaFiltro),
+                              initialValue: categoriaFiltro?.name ?? 'TODOS',
+                              isExpanded: true,
+                              dropdownColor: AppTheme.surface,
+                              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                filled: true,
+                                fillColor: AppTheme.surfaceVariant,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppTheme.borderLight),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppTheme.borderLight),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppTheme.primaryAmber),
+                                ),
+                                prefixIcon: const Icon(Icons.category_outlined, color: AppTheme.primaryAmber, size: 20),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: 'TODOS',
+                                  child: Text('Todas las categorías', overflow: TextOverflow.ellipsis),
+                                ),
+                                ...CategoriaProducto.values.map(
+                                  (cat) => DropdownMenuItem<String>(
+                                    value: cat.name,
+                                    child: Text(cat.label, overflow: TextOverflow.ellipsis),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val == null || val == 'TODOS') {
+                                  ref.read(catalogoFiltroCategoriaProvider.notifier).state = null;
+                                } else {
+                                  ref.read(catalogoFiltroCategoriaProvider.notifier).state =
+                                      CategoriaProducto.values.firstWhere((c) => c.name == val);
+                                }
+                              },
                             ),
                           ),
-                          ...CategoriaProducto.values.map((cat) {
-                            final isSel = categoriaFiltro == cat;
-                            return FilterChip(
-                              label: Text(cat.label),
-                              selected: isSel,
-                              onSelected: (_) {
-                                ref.read(catalogoFiltroCategoriaProvider.notifier).state =
-                                    isSel ? null : cat;
-                              },
-                              selectedColor: AppTheme.primaryAmber,
-                              labelStyle: TextStyle(
-                                color: isSel ? Colors.black : AppTheme.textPrimary,
-                                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                          const SizedBox(width: 10),
+                          Badge(
+                            isLabelVisible: cart.totalUnidades > 0,
+                            label: Text(
+                              '${cart.totalUnidades}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            backgroundColor: AppTheme.primaryAmber,
+                            textColor: Colors.black,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryAmber,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                            );
-                          }),
+                              onPressed: () => _abrirComanda(context),
+                              icon: const Icon(Icons.receipt_long, size: 20, color: Colors.black),
+                              label: const Text(
+                                'Comanda',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -382,7 +443,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 color: AppTheme.surface,
                 border: Border(left: BorderSide(color: AppTheme.borderLight)),
               ),
-              child: _buildComandaSidebar(context, cart),
+              child: _buildComandaSidebar(context),
             ),
         ],
       ),
@@ -391,17 +452,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               padding: const EdgeInsets.all(12),
               color: AppTheme.surface,
               child: ElevatedButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: AppTheme.surface,
-                    builder: (ctx) => SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.90,
-                      child: _buildComandaSidebar(context, cart),
-                    ),
-                  );
-                },
+                onPressed: () => _abrirComanda(context),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -415,7 +466,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-  Widget _buildComandaSidebar(BuildContext context, PosCartState cart) {
+  Widget _buildComandaSidebar(BuildContext context) {
+    final cart = ref.watch(posCartProvider);
     final clientesAsync = ref.watch(clientesRegistradosProvider);
 
     return Padding(
@@ -427,46 +479,62 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.receipt_long, color: AppTheme.primaryAmber),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Comanda de Barra',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  if (cart.totalUnidades > 0) ...[
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long, color: AppTheme.primaryAmber),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryAmber.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                    const Flexible(
                       child: Text(
-                        '${cart.totalUnidades}',
-                        style: const TextStyle(
-                          color: AppTheme.primaryAmber,
-                          fontSize: 11,
+                        'Comanda de Barra',
+                        style: TextStyle(
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (cart.totalUnidades > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryAmber.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${cart.totalUnidades}',
+                          style: const TextStyle(
+                            color: AppTheme.primaryAmber,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (cart.items.isNotEmpty)
+                    TextButton(
+                      onPressed: () {
+                        ref.read(posCartProvider.notifier).limpiarCarrito();
+                        _limpiarCliente();
+                      },
+                      child: const Text('Limpiar', style: TextStyle(color: AppTheme.errorCoral)),
+                    ),
+                  if (MediaQuery.of(context).size.width < 900)
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppTheme.textSecondary, size: 20),
+                      tooltip: 'Cerrar comanda',
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
                 ],
               ),
-              if (cart.items.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    ref.read(posCartProvider.notifier).limpiarCarrito();
-                    _limpiarCliente();
-                  },
-                  child: const Text('Limpiar', style: TextStyle(color: AppTheme.errorCoral)),
-                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -817,6 +885,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
 
           const SizedBox(height: 10),
+
+          // Buscador rápido de productos para agregar directamente a la comanda
+          const _BuscadorProductoComanda(),
+
+          const SizedBox(height: 10),
           const Divider(color: AppTheme.borderLight, height: 1),
 
           // Lista de ítems en carrito
@@ -859,8 +932,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 color: AppTheme.primaryAmber,
                               ),
                             ),
+                            const SizedBox(width: 4),
                             IconButton(
-                              icon: const Icon(Icons.close, size: 16, color: AppTheme.errorCoral),
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.close, size: 18, color: AppTheme.errorCoral),
+                              tooltip: 'Eliminar producto de comanda',
                               onPressed: () {
                                 ref.read(posCartProvider.notifier).eliminarItem(it.presentacion.id);
                               },
@@ -1223,6 +1301,160 @@ class _DialogoBuscarClienteState extends ConsumerState<_DialogoBuscarCliente> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Buscador interactivo de productos dentro de la Comanda
+class _BuscadorProductoComanda extends ConsumerStatefulWidget {
+  const _BuscadorProductoComanda();
+
+  @override
+  ConsumerState<_BuscadorProductoComanda> createState() => _BuscadorProductoComandaState();
+}
+
+class _BuscadorProductoComandaState extends ConsumerState<_BuscadorProductoComanda> {
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final catalogoCompletoAsync = ref.watch(catalogoCompletoVentasProvider);
+    final catalogoVentasAsync = ref.watch(catalogoVentasProvider);
+    final List<PresentacionVenta> catalogo =
+        catalogoCompletoAsync.asData?.value ?? catalogoVentasAsync.asData?.value ?? [];
+
+    final query = _searchCtrl.text.trim().toLowerCase();
+    final sugerencias = query.isEmpty
+        ? <PresentacionVenta>[]
+        : catalogo
+            .where((p) =>
+                p.nombre.toLowerCase().contains(query) ||
+                p.codigo.toLowerCase().contains(query))
+            .take(6)
+            .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _searchCtrl,
+          style: const TextStyle(fontSize: 12),
+          onSubmitted: (_) {
+            if (sugerencias.isNotEmpty) {
+              ref.read(posCartProvider.notifier).agregarPresentacion(sugerencias.first);
+              _searchCtrl.clear();
+              setState(() {});
+            }
+          },
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: 'Buscar y agregar producto a la comanda...',
+            hintStyle: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+            prefixIcon: const Icon(
+              Icons.add_shopping_cart_rounded,
+              color: AppTheme.primaryAmber,
+              size: 18,
+            ),
+            suffixIcon: _searchCtrl.text.isNotEmpty
+                ? IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.clear, size: 16, color: AppTheme.textMuted),
+                    onPressed: () {
+                      _searchCtrl.clear();
+                      setState(() {});
+                    },
+                  )
+                : null,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            filled: true,
+            fillColor: AppTheme.surfaceVariant.withValues(alpha: 0.6),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppTheme.borderLight),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppTheme.borderLight),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppTheme.primaryAmber),
+            ),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        if (query.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Container(
+            constraints: const BoxConstraints(maxHeight: 180),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.borderLight),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: sugerencias.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Center(
+                      child: Text(
+                        'No hay productos que coincidan',
+                        style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    shrinkWrap: true,
+                    itemCount: sugerencias.length,
+                    separatorBuilder: (_, _) =>
+                        const Divider(color: AppTheme.borderLight, height: 1),
+                    itemBuilder: (context, index) {
+                      final p = sugerencias[index];
+                      return ListTile(
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        title: Text(
+                          p.nombre,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${p.categoria.label} • ${Formatters.currency(p.precioVigente)}',
+                          style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                        ),
+                        trailing: const Icon(
+                          Icons.add_circle,
+                          color: AppTheme.primaryAmber,
+                          size: 20,
+                        ),
+                        onTap: () {
+                          ref.read(posCartProvider.notifier).agregarPresentacion(p);
+                          _searchCtrl.clear();
+                          setState(() {});
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ],
     );
   }
 }

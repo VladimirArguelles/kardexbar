@@ -84,33 +84,43 @@ class _CierreScreenState extends ConsumerState<CierreScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.calculate_outlined, color: AppTheme.primaryAmber, size: 28),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Cierre y Arqueo Diario de Barra',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
-                          ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calculate_outlined, color: AppTheme.primaryAmber, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Cierre y Arqueo Diario de Barra',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Fecha de Cuadre: ${Formatters.date(fecha)}',
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        Text(
-                          'Fecha de Cuadre: ${Formatters.date(fecha)}',
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     OutlinedButton.icon(
                       icon: const Icon(Icons.calendar_today, size: 16),
@@ -177,141 +187,84 @@ class _CierreScreenState extends ConsumerState<CierreScreen> {
                     // Resumen de Métricas de Cuadre
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: MetricCard(
-                              title: 'Total Insumos',
-                              value: '${items.length}',
-                              subtitle: 'Productos auditados',
-                              icon: Icons.checklist_rtl_rounded,
-                              accentColor: AppTheme.secondaryCyan,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: MetricCard(
-                              title: 'Cuadre Exacto',
-                              value: '$exactos',
-                              subtitle: 'Sin discrepancias',
-                              icon: Icons.check_circle_outline,
-                              accentColor: AppTheme.successMint,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: MetricCard(
-                              title: 'Faltantes',
-                              value: '$faltantes',
-                              subtitle: 'Requiere justificación',
-                              icon: Icons.arrow_downward_rounded,
-                              accentColor: AppTheme.errorCoral,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: MetricCard(
-                              title: 'Sobrantes',
-                              value: '$sobrantes',
-                              subtitle: 'Exceso en barra',
-                              icon: Icons.arrow_upward_rounded,
-                              accentColor: AppTheme.infoViolet,
-                            ),
-                          ),
-                        ],
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isCompact = constraints.maxWidth < 700;
+                          final c1 = MetricCard(
+                            title: 'Total Insumos',
+                            value: '${items.length}',
+                            subtitle: 'Productos auditados',
+                            icon: Icons.checklist_rtl_rounded,
+                            accentColor: AppTheme.secondaryCyan,
+                          );
+                          final c2 = MetricCard(
+                            title: 'Cuadre Exacto',
+                            value: '$exactos',
+                            subtitle: 'Sin discrepancias',
+                            icon: Icons.check_circle_outline,
+                            accentColor: AppTheme.successMint,
+                          );
+                          final c3 = MetricCard(
+                            title: 'Faltantes',
+                            value: '$faltantes',
+                            subtitle: 'Requiere justificación',
+                            icon: Icons.arrow_downward_rounded,
+                            accentColor: AppTheme.errorCoral,
+                          );
+                          final c4 = MetricCard(
+                            title: 'Sobrantes',
+                            value: '$sobrantes',
+                            subtitle: 'Exceso en barra',
+                            icon: Icons.arrow_upward_rounded,
+                            accentColor: AppTheme.infoViolet,
+                          );
+
+                          if (isCompact) {
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(child: c1),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: c2),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(child: c3),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: c4),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(child: c1),
+                              const SizedBox(width: 12),
+                              Expanded(child: c2),
+                              const SizedBox(width: 12),
+                              Expanded(child: c3),
+                              const SizedBox(width: 12),
+                              Expanded(child: c4),
+                            ],
+                          );
+                        },
                       ),
                     ),
 
-                    // Tabla de Arqueo Detallada
+                    // Lista de Arqueo Detallada sin desbordes ni solapamientos
                     Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.borderLight),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: SingleChildScrollView(
-                            child: DataTable(
-                              headingRowColor: WidgetStateProperty.all(AppTheme.surfaceVariant),
-                              columns: const [
-                                DataColumn(label: Text('Producto / Insumo', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Stock Inicial', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
-                                DataColumn(label: Text('Surtido (+)', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
-                                DataColumn(label: Text('Ventas (-)', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
-                                DataColumn(label: Text('Stock Teórico', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.secondaryCyan)), numeric: true),
-                                DataColumn(label: Text('Conteo Físico', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryAmber))),
-                                DataColumn(label: Text('Diferencia', style: TextStyle(fontWeight: FontWeight.bold))),
-                              ],
-                              rows: items.map((it) {
-                                final ctrl = _conteoControllers[it.productoId]!;
-                                final diff = it.diferencia;
-
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            it.nombreProducto,
-                                            style: const TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          Text(
-                                            '${it.codigoProducto} • ${it.categoria.label}',
-                                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    DataCell(Text(Formatters.number(it.stockInicial))),
-                                    DataCell(Text('+ ${Formatters.number(it.surtidoDia)}', style: const TextStyle(color: AppTheme.successMint))),
-                                    DataCell(Text('- ${Formatters.number(it.ventasSalidasDia)}', style: const TextStyle(color: AppTheme.errorCoral))),
-                                    DataCell(
-                                      Text(
-                                        '${Formatters.number(it.stockTeorico)} ${it.unidadMedida}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.secondaryCyan),
-                                      ),
-                                    ),
-                                    DataCell(
-                                      SizedBox(
-                                        width: 100,
-                                        child: TextField(
-                                          controller: ctrl,
-                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                          textAlign: TextAlign.center,
-                                          decoration: InputDecoration(
-                                            isDense: true,
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                            suffixText: it.unidadMedida,
-                                            suffixStyle: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
-                                          ),
-                                          onChanged: (val) {
-                                            final double? nuevo = double.tryParse(val.replaceAll(',', '.'));
-                                            if (nuevo != null) {
-                                              setState(() {
-                                                it.conteoFisico = nuevo;
-                                              });
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    DataCell(
-                                      DifferenceBadge(
-                                        diferencia: diff,
-                                        unidadMedida: it.unidadMedida,
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: items.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, idx) {
+                          return _buildAuditoriaItem(items[idx]);
+                        },
                       ),
                     ),
 
@@ -363,6 +316,148 @@ class _CierreScreenState extends ConsumerState<CierreScreen> {
                 child: Text('Error al cargar arqueo: $err', style: const TextStyle(color: AppTheme.errorCoral)),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricSnippet(String label, String value, {Color? color}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: color ?? AppTheme.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAuditoriaItem(CierreDiarioItem it) {
+    final ctrl = _conteoControllers[it.productoId]!;
+    final diff = it.diferencia;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Fila 1: Nombre del producto (Expanded, negrita, max 2 líneas) + Diferencia Badge
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      it.nombreProducto,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${it.codigoProducto} • ${it.categoria.label}',
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              DifferenceBadge(
+                diferencia: diff,
+                unidadMedida: it.unidadMedida,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Divider(color: AppTheme.borderLight, height: 1),
+          const SizedBox(height: 10),
+          // Fila 2: Columnas numéricas alineadas a la derecha y campo de conteo físico
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Wrap(
+                spacing: 10,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Teórico', style: TextStyle(color: AppTheme.textMuted, fontSize: 10)),
+                      Text(
+                        '${Formatters.number(it.stockTeorico)} ${it.unidadMedida}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.secondaryCyan,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildMetricSnippet('Inicial', Formatters.number(it.stockInicial)),
+                  _buildMetricSnippet('Surtido', '+${Formatters.number(it.surtidoDia)}', color: AppTheme.successMint),
+                  _buildMetricSnippet('Ventas', '-${Formatters.number(it.ventasSalidasDia)}', color: AppTheme.errorCoral),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Físico: ',
+                    style: TextStyle(color: AppTheme.primaryAmber, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
+                    width: 95,
+                    child: TextField(
+                      controller: ctrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                        suffixText: it.unidadMedida,
+                        suffixStyle: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
+                      ),
+                      onChanged: (val) {
+                        final double? nuevo = double.tryParse(val.replaceAll(',', '.'));
+                        if (nuevo != null) {
+                          setState(() {
+                            it.conteoFisico = nuevo;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

@@ -4,8 +4,8 @@ import '../models/presentacion_model.dart';
 
 class CartItem {
   final PresentacionVenta presentacion;
-  int cantidad;
-  String? notas;
+  final int cantidad;
+  final String? notas;
 
   CartItem({
     required this.presentacion,
@@ -14,6 +14,18 @@ class CartItem {
   });
 
   double get subtotal => cantidad * presentacion.precioVigente;
+
+  CartItem copyWith({
+    PresentacionVenta? presentacion,
+    int? cantidad,
+    String? notas,
+  }) {
+    return CartItem(
+      presentacion: presentacion ?? this.presentacion,
+      cantidad: cantidad ?? this.cantidad,
+      notas: notas ?? this.notas,
+    );
+  }
 }
 
 class PosCartState {
@@ -78,8 +90,9 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
   void agregarPresentacion(PresentacionVenta p) {
     final index = state.items.indexWhere((it) => it.presentacion.id == p.id);
     if (index >= 0) {
+      final current = state.items[index];
       final updatedList = List<CartItem>.from(state.items);
-      updatedList[index].cantidad += 1;
+      updatedList[index] = current.copyWith(cantidad: current.cantidad + 1);
       state = state.copyWith(items: updatedList);
     } else {
       state = state.copyWith(
@@ -91,9 +104,10 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
   void reducirCantidad(String presentacionId) {
     final index = state.items.indexWhere((it) => it.presentacion.id == presentacionId);
     if (index >= 0) {
-      final updatedList = List<CartItem>.from(state.items);
-      if (updatedList[index].cantidad > 1) {
-        updatedList[index].cantidad -= 1;
+      final current = state.items[index];
+      if (current.cantidad > 1) {
+        final updatedList = List<CartItem>.from(state.items);
+        updatedList[index] = current.copyWith(cantidad: current.cantidad - 1);
         state = state.copyWith(items: updatedList);
       } else {
         eliminarItem(presentacionId);
@@ -102,9 +116,9 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
   }
 
   void eliminarItem(String presentacionId) {
-    state = state.copyWith(
-      items: state.items.where((it) => it.presentacion.id != presentacionId).toList(),
-    );
+    final newItems =
+        state.items.where((it) => it.presentacion.id != presentacionId).toList();
+    state = state.copyWith(items: newItems);
   }
 
   void setMetodoPago(MetodoPago m) => state = state.copyWith(metodoPago: m);

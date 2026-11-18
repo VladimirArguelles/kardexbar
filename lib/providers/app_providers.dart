@@ -36,6 +36,13 @@ final catalogoVentasProvider =
   );
 });
 
+// Catálogo completo sin filtros para buscador de comanda
+final catalogoCompletoVentasProvider =
+    FutureProvider.autoDispose<List<PresentacionVenta>>((ref) async {
+  final ventasService = ref.watch(ventasServiceProvider);
+  return ventasService.getCatalogoVenta();
+});
+
 // Filtros para Inventario
 final inventarioFiltroCategoriaProvider =
     StateProvider<CategoriaProducto?>((ref) => null);

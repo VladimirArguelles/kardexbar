@@ -53,37 +53,20 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
               color: AppTheme.borderLight,
             ),
             const SizedBox(width: 16),
-            Text(
-              _titles[_currentIndex],
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppTheme.textSecondary,
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Text(
+                _titles[_currentIndex],
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.borderLight),
-            ),
-            child: Row(
-              children: const [
-                Icon(Icons.person_pin_circle_rounded, color: AppTheme.secondaryCyan, size: 16),
-                SizedBox(width: 6),
-                Text(
-                  'Bartender en Turno',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
       body: Row(
         children: [

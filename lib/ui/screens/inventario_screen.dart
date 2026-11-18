@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
-import '../../models/producto_model.dart';
+import '../../models/insumo_model.dart';
+import '../../models/movimiento_kardex_model.dart';
 import '../../providers/app_providers.dart';
 
 class InventarioScreen extends ConsumerStatefulWidget {
@@ -21,29 +22,250 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
     super.dispose();
   }
 
-  void _mostrarDialogoSurtidoOMerma({
+  /// Modal para registrar cualquier movimiento de inventario (Entrada, Merma, Traslado)
+  void _mostrarDialogoRegistrarMovimiento({
     required BuildContext context,
-    required Producto producto,
-    required bool esSurtido,
+    Insumo? insumoPreseleccionado,
+    List<Insumo> listaInsumos = const [],
   }) {
+    Insumo? insumoActual = insumoPreseleccionado ?? (listaInsumos.isNotEmpty ? listaInsumos.first : null);
+    TipoMovimientoKardex tipoSeleccionado = TipoMovimientoKardex.entrada;
     final cantCtrl = TextEditingController();
-    final motivoCtrl = TextEditingController(
-      text: esSurtido ? 'Reabastecimiento desde bodega' : 'Rotura de botella / merma en barra',
-    );
+    final notaCtrl = TextEditingController();
+    String motivoMerma = 'Rotura de botella';
 
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final String unidad = insumoActual?.unidadMedida ?? 'unidad';
+
+          return AlertDialog(
+            backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryAmber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.swap_horiz_rounded, color: AppTheme.primaryAmber, size: 22),
+                ),
+                const SizedBox(width: 10),
+                const Text('Registrar Movimiento Kardex', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Selector de Insumo
+                  const Text('Insumo Físico:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 4),
+                  if (insumoPreseleccionado != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppTheme.borderLight),
+                      ),
+                      child: Text(
+                        '${insumoPreseleccionado.nombre} (Stock: ${Formatters.number(insumoPreseleccionado.stockActual)} ${insumoPreseleccionado.unidadMedida})',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    )
+                  else
+                    DropdownButtonFormField<Insumo>(
+                      key: ValueKey(insumoActual?.id),
+                      initialValue: insumoActual,
+                      isExpanded: true,
+                      dropdownColor: AppTheme.surface,
+                      decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.all(10)),
+                      items: listaInsumos.map((i) {
+                        return DropdownMenuItem(
+                          value: i,
+                          child: Text(
+                            '${i.nombre} (${Formatters.number(i.stockActual)} ${i.unidadMedida})',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => insumoActual = val);
+                      },
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Selector de Tipo de Movimiento
+                  const Text('Tipo de Operación:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 6),
+                  RadioGroup<TipoMovimientoKardex>(
+                    groupValue: tipoSeleccionado,
+                    onChanged: (v) {
+                      if (v != null) setModalState(() => tipoSeleccionado = v);
+                    },
+                    child: Column(
+                      children: const [
+                        RadioListTile<TipoMovimientoKardex>(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: AppTheme.successMint,
+                          title: Text('Recepción de Insumos (+ Suma Stock)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Entrada por compra o reposición de bodega', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                          value: TipoMovimientoKardex.entrada,
+                        ),
+                        RadioListTile<TipoMovimientoKardex>(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: AppTheme.errorCoral,
+                          title: Text('Registro de Merma (- Resta Stock)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Pérdida por rotura, derrame o vencimiento', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                          value: TipoMovimientoKardex.merma,
+                        ),
+                        RadioListTile<TipoMovimientoKardex>(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: AppTheme.infoViolet,
+                          title: Text('Traslado a Sede 2 (- Resta Stock)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Transferencia con destino fijo: Sede 2', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                          value: TipoMovimientoKardex.traspasoSede2,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Campo de Cantidad
+                  TextField(
+                    controller: cantCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Cantidad a mover ($unidad) *',
+                      prefixIcon: const Icon(Icons.numbers),
+                      isDense: true,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Campo específico si es Merma
+                  if (tipoSeleccionado == TipoMovimientoKardex.merma) ...[
+                    DropdownButtonFormField<String>(
+                      key: ValueKey(motivoMerma),
+                      initialValue: motivoMerma,
+                      isExpanded: true,
+                      dropdownColor: AppTheme.surface,
+                      decoration: const InputDecoration(labelText: 'Motivo de la merma *', isDense: true),
+                      items: const [
+                        DropdownMenuItem(value: 'Rotura de botella', child: Text('Rotura de botella')),
+                        DropdownMenuItem(value: 'Derrame en preparación', child: Text('Derrame en preparación')),
+                        DropdownMenuItem(value: 'Vencimiento / Descomposición', child: Text('Vencimiento / Descomposición')),
+                        DropdownMenuItem(value: 'Ajuste de inventario negativo', child: Text('Ajuste de inventario negativo')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => motivoMerma = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // Campo de notas / detalle
+                  TextField(
+                    controller: notaCtrl,
+                    decoration: InputDecoration(
+                      labelText: tipoSeleccionado == TipoMovimientoKardex.traspasoSede2
+                          ? 'Responsable / Nota de entrega (Destino: Sede 2)'
+                          : 'Nota u observación (opcional)',
+                      prefixIcon: const Icon(Icons.comment_outlined),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tipoSeleccionado == TipoMovimientoKardex.entrada
+                      ? AppTheme.successMint
+                      : (tipoSeleccionado == TipoMovimientoKardex.merma ? AppTheme.errorCoral : AppTheme.infoViolet),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  final double? cant = double.tryParse(cantCtrl.text.replaceAll(',', '.'));
+                  if (cant == null || cant <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Ingrese una cantidad válida mayor a 0'), backgroundColor: AppTheme.errorCoral),
+                    );
+                    return;
+                  }
+
+                  if (insumoActual == null) return;
+
+                  final service = ref.read(insumosServiceProvider);
+                  String motivoFinal;
+                  if (tipoSeleccionado == TipoMovimientoKardex.merma) {
+                    motivoFinal = '$motivoMerma${notaCtrl.text.isNotEmpty ? ' - ${notaCtrl.text}' : ''}';
+                  } else if (tipoSeleccionado == TipoMovimientoKardex.traspasoSede2) {
+                    motivoFinal = 'Traslado a Sede 2${notaCtrl.text.isNotEmpty ? ': ${notaCtrl.text}' : ''}';
+                  } else {
+                    motivoFinal = notaCtrl.text.isNotEmpty ? notaCtrl.text : 'Recepción de Insumos';
+                  }
+
+                  await service.registrarMovimiento(
+                    insumoId: insumoActual!.id,
+                    tipo: tipoSeleccionado,
+                    cantidad: cant,
+                    motivo: motivoFinal,
+                    destino: tipoSeleccionado == TipoMovimientoKardex.traspasoSede2 ? 'Sede 2' : 'Barra Principal',
+                  );
+
+                  ref.invalidate(listaInsumosProvider);
+                  ref.invalidate(inventarioProductosProvider);
+
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Movimiento registrado con éxito para ${insumoActual!.nombre}'),
+                        backgroundColor: AppTheme.successMint,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Confirmar Movimiento'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Acción rápida para marcar insumo como agotado
+  void _confirmarMarcarAgotado(BuildContext context, Insumo insumo) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
-          children: [
-            Icon(
-              esSurtido ? Icons.add_business_rounded : Icons.warning_amber_rounded,
-              color: esSurtido ? AppTheme.successMint : AppTheme.errorCoral,
-            ),
-            const SizedBox(width: 8),
-            Text(esSurtido ? 'Surtido de Barra' : 'Registrar Merma / Rotura'),
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: AppTheme.errorCoral, size: 28),
+            SizedBox(width: 8),
+            Text('¿Marcar como AGOTADO?'),
           ],
         ),
         content: Column(
@@ -51,29 +273,18 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              producto.nombre,
+              insumo.nombre,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
+            const SizedBox(height: 6),
             Text(
-              'Stock actual: ${Formatters.number(producto.stockActual)} ${producto.unidadMedida}',
+              'Stock actual: ${Formatters.number(insumo.stockActual)} ${insumo.unidadMedida}',
               style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: cantCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Cantidad (${producto.unidadMedida})',
-                prefixIcon: const Icon(Icons.numbers),
-              ),
-            ),
             const SizedBox(height: 12),
-            TextField(
-              controller: motivoCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Motivo / Justificación',
-                prefixIcon: Icon(Icons.comment),
-              ),
+            const Text(
+              'Al confirmar, el stock físico se establecerá en 0.00, se activará la etiqueta roja de AGOTADO y se registrará automáticamente en movimientos_kardex.',
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
             ),
           ],
         ),
@@ -84,32 +295,25 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: esSurtido ? AppTheme.successMint : AppTheme.errorCoral,
+              backgroundColor: AppTheme.errorCoral,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
-              final double? cant = double.tryParse(cantCtrl.text.replaceAll(',', '.'));
-              if (cant == null || cant <= 0) return;
+              await ref.read(insumosServiceProvider).marcarAgotado(insumoId: insumo.id);
+              ref.invalidate(listaInsumosProvider);
+              ref.invalidate(inventarioProductosProvider);
 
-              final service = ref.read(productosServiceProvider);
-              if (esSurtido) {
-                await service.registrarEntradaSurtido(
-                  productoId: producto.id,
-                  cantidad: cant,
-                  motivo: motivoCtrl.text,
-                );
-              } else {
-                await service.registrarMerma(
-                  productoId: producto.id,
-                  cantidad: cant,
-                  motivo: motivoCtrl.text,
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('¡${insumo.nombre} ha sido marcado como AGOTADO!'),
+                    backgroundColor: AppTheme.errorCoral,
+                  ),
                 );
               }
-
-              ref.invalidate(inventarioProductosProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: Text(esSurtido ? 'Ingresar Surtido' : 'Registrar Merma'),
+            child: const Text('Sí, Marcar Agotado'),
           ),
         ],
       ),
@@ -118,10 +322,23 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final productosAsync = ref.watch(inventarioProductosProvider);
-    final categoriaFiltro = ref.watch(inventarioFiltroCategoriaProvider);
+    final insumosAsync = ref.watch(listaInsumosProvider);
+    final filtroUnidad = ref.watch(insumosFiltroUnidadProvider);
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppTheme.primaryAmber,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.add_task_rounded),
+        label: const Text(
+          '+ Registrar Movimiento',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        onPressed: () {
+          final items = insumosAsync.asData?.value ?? [];
+          _mostrarDialogoRegistrarMovimiento(context: context, listaInsumos: items);
+        },
+      ),
       body: Column(
         children: [
           // Barra de Búsqueda y Filtros
@@ -143,27 +360,28 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                   icon: const Icon(Icons.clear, size: 18),
                                   onPressed: () {
                                     _searchCtrl.clear();
-                                    ref.read(inventarioBusquedaProvider.notifier).state = '';
+                                    ref.read(insumosBusquedaProvider.notifier).state = '';
                                   },
                                 )
                               : null,
                         ),
                         onChanged: (val) {
-                          ref.read(inventarioBusquedaProvider.notifier).state = val;
+                          ref.read(insumosBusquedaProvider.notifier).state = val;
                         },
                       ),
                     ),
                     const SizedBox(width: 12),
                     IconButton(
                       icon: const Icon(Icons.refresh, color: AppTheme.primaryAmber),
-                      onPressed: () => ref.invalidate(inventarioProductosProvider),
+                      tooltip: 'Actualizar inventario',
+                      onPressed: () => ref.invalidate(listaInsumosProvider),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  key: ValueKey(categoriaFiltro),
-                  initialValue: categoriaFiltro?.name ?? 'TODOS',
+                  key: ValueKey(filtroUnidad),
+                  initialValue: filtroUnidad ?? 'TODOS',
                   isExpanded: true,
                   dropdownColor: AppTheme.surface,
                   style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
@@ -184,27 +402,16 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: AppTheme.primaryAmber),
                     ),
-                    prefixIcon: const Icon(Icons.category_outlined, color: AppTheme.primaryAmber, size: 20),
+                    prefixIcon: const Icon(Icons.straighten_rounded, color: AppTheme.primaryAmber, size: 20),
                   ),
-                  items: [
-                    const DropdownMenuItem<String>(
-                      value: 'TODOS',
-                      child: Text('Todas las categorías', overflow: TextOverflow.ellipsis),
-                    ),
-                    ...CategoriaProducto.values.map(
-                      (cat) => DropdownMenuItem<String>(
-                        value: cat.name,
-                        child: Text(cat.label, overflow: TextOverflow.ellipsis),
-                      ),
-                    ),
+                  items: const [
+                    DropdownMenuItem(value: 'TODOS', child: Text('Todas las unidades de medida')),
+                    DropdownMenuItem(value: 'ml', child: Text('Líquidos & Licores (ml)')),
+                    DropdownMenuItem(value: 'unidad', child: Text('Botellas & Unidades (unidad)')),
+                    DropdownMenuItem(value: 'gr', child: Text('Sólidos & Frutas (gr)')),
                   ],
                   onChanged: (val) {
-                    if (val == null || val == 'TODOS') {
-                      ref.read(inventarioFiltroCategoriaProvider.notifier).state = null;
-                    } else {
-                      ref.read(inventarioFiltroCategoriaProvider.notifier).state =
-                          CategoriaProducto.values.firstWhere((c) => c.name == val);
-                    }
+                    ref.read(insumosFiltroUnidadProvider.notifier).state = (val == null || val == 'TODOS') ? null : val;
                   },
                 ),
               ],
@@ -213,180 +420,187 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
 
           // Lista de Insumos Físicos Kardex
           Expanded(
-            child: productosAsync.when(
-              data: (productos) {
-                if (productos.isEmpty) {
+            child: insumosAsync.when(
+              data: (insumos) {
+                if (insumos.isEmpty) {
                   return const Center(
                     child: Text(
-                      'No hay productos registrados en inventario',
+                      'No hay insumos registrados en inventario',
                       style: TextStyle(color: AppTheme.textMuted),
                     ),
                   );
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: productos.length,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                  itemCount: insumos.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, idx) {
-                    final p = productos[idx];
-                    final bool bajoMinimo = p.requiereReabastecimiento;
+                    final insumo = insumos[idx];
+                    final bool agotado = insumo.estaAgotado;
+                    final bool bajoMinimo = insumo.requiereReabastecimiento;
+
+                    Color estadoColor;
+                    String estadoTexto;
+                    IconData estadoIcon;
+
+                    if (agotado) {
+                      estadoColor = AppTheme.errorCoral;
+                      estadoTexto = 'AGOTADO';
+                      estadoIcon = Icons.do_not_disturb_on_rounded;
+                    } else if (bajoMinimo) {
+                      estadoColor = Colors.orange;
+                      estadoTexto = 'BAJO MÍNIMO';
+                      estadoIcon = Icons.warning_amber_rounded;
+                    } else {
+                      estadoColor = AppTheme.successMint;
+                      estadoTexto = 'ÓPTIMO';
+                      estadoIcon = Icons.check_circle_outline;
+                    }
 
                     return Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Icono de estado de stock
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: bajoMinimo
-                                    ? AppTheme.errorCoral.withValues(alpha: 0.15)
-                                    : AppTheme.successMint.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                bajoMinimo
-                                    ? Icons.warning_amber_rounded
-                                    : Icons.inventory_2_outlined,
-                                color: bajoMinimo ? AppTheme.errorCoral : AppTheme.successMint,
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
+                            Row(
+                              children: [
+                                // Icono de estado
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: estadoColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(estadoIcon, color: estadoColor, size: 22),
+                                ),
+                                const SizedBox(width: 14),
 
-                            // Detalles del Producto
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                                // Nombre y Badge de estado
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Flexible(
-                                        child: Text(
-                                          p.nombre,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.textPrimary,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      if (bajoMinimo) ...[
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.errorCoral.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: const Text(
-                                            'SURTIR',
-                                            style: TextStyle(
-                                              color: AppTheme.errorCoral,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              insumo.nombre,
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.textPrimary,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: estadoColor.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: estadoColor.withValues(alpha: 0.5)),
+                                            ),
+                                            child: Text(
+                                              estadoTexto,
+                                              style: TextStyle(
+                                                color: estadoColor,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Unidad: ${insumo.unidadMedida} • Mínimo sugerido: ${Formatters.number(insumo.stockMinimo)}',
+                                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                      ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Código: ${p.codigo} | Categoría: ${p.categoria.label}',
-                                    style: const TextStyle(
-                                      color: AppTheme.textMuted,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
+                                ),
 
-                                  // Barra de progreso de stock
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(
-                                      value: p.porcentajeStock / 2.0,
-                                      minHeight: 6,
-                                      backgroundColor: AppTheme.surfaceVariant,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        bajoMinimo ? AppTheme.errorCoral : AppTheme.successMint,
+                                const SizedBox(width: 12),
+
+                                // Stock Actual
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${Formatters.number(insumo.stockActual)} ${insumo.unidadMedida}',
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                        color: agotado ? AppTheme.errorCoral : AppTheme.textPrimary,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-
-                            // Valores de Stock
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${Formatters.number(p.stockActual)} ${p.unidadMedida}',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: bajoMinimo
-                                        ? AppTheme.errorCoral
-                                        : AppTheme.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  'Mín: ${Formatters.number(p.stockMinimo)} ${p.unidadMedida}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.textSecondary,
-                                  ),
+                                    Text(
+                                      'Mín: ${Formatters.number(insumo.stockMinimo)}',
+                                      style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(width: 16),
 
-                            // Acciones Rápidas
-                            PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert, color: AppTheme.textSecondary),
-                              color: AppTheme.surfaceVariant,
-                              onSelected: (val) {
-                                if (val == 'surtido') {
-                                  _mostrarDialogoSurtidoOMerma(
-                                    context: context,
-                                    producto: p,
-                                    esSurtido: true,
-                                  );
-                                } else if (val == 'merma') {
-                                  _mostrarDialogoSurtidoOMerma(
-                                    context: context,
-                                    producto: p,
-                                    esSurtido: false,
-                                  );
-                                }
-                              },
-                              itemBuilder: (ctx) => [
-                                const PopupMenuItem(
-                                  value: 'surtido',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.add_circle_outline, color: AppTheme.successMint, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Ingresar Surtido'),
-                                    ],
+                            const SizedBox(height: 10),
+
+                            // Barra de nivel de stock
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: insumo.porcentajeStock / 2.0,
+                                minHeight: 5,
+                                backgroundColor: AppTheme.surfaceVariant,
+                                valueColor: AlwaysStoppedAnimation<Color>(estadoColor),
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+                            const Divider(color: AppTheme.borderLight, height: 1),
+                            const SizedBox(height: 10),
+
+                            // Fila de Acciones: Botón rápido "Marcar Agotado" y Registrar Movimiento
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppTheme.errorCoral,
+                                    side: BorderSide(
+                                      color: agotado ? AppTheme.textMuted : AppTheme.errorCoral.withValues(alpha: 0.6),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    visualDensity: VisualDensity.compact,
                                   ),
+                                  onPressed: agotado
+                                      ? null
+                                      : () => _confirmarMarcarAgotado(context, insumo),
+                                  icon: const Icon(Icons.do_not_disturb_on_rounded, size: 16),
+                                  label: Text(agotado ? 'Agotado' : 'Marcar Agotado'),
                                 ),
-                                const PopupMenuItem(
-                                  value: 'merma',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.remove_circle_outline, color: AppTheme.errorCoral, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Registrar Merma/Rotura'),
-                                    ],
-                                  ),
+                                Row(
+                                  children: [
+                                    TextButton.icon(
+                                      style: TextButton.styleFrom(
+                                        visualDensity: VisualDensity.compact,
+                                        foregroundColor: AppTheme.primaryAmber,
+                                      ),
+                                      icon: const Icon(Icons.swap_horiz, size: 16),
+                                      label: const Text('Mover / Merma'),
+                                      onPressed: () {
+                                        _mostrarDialogoRegistrarMovimiento(
+                                          context: context,
+                                          insumoPreseleccionado: insumo,
+                                          listaInsumos: insumos,
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -401,7 +615,7 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                 child: CircularProgressIndicator(color: AppTheme.primaryAmber),
               ),
               error: (err, _) => Center(
-                child: Text('Error: $err', style: const TextStyle(color: AppTheme.errorCoral)),
+                child: Text('Error al cargar insumos: $err', style: const TextStyle(color: AppTheme.errorCoral)),
               ),
             ),
           ),

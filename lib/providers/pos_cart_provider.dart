@@ -33,6 +33,7 @@ class PosCartState {
   final MetodoPago metodoPago;
   final CanalVenta canal;
   final TipoOperacionVenta tipoOperacion;
+  final String numeroTicketCaja;
   final String clienteNombre;
   final String clienteCedula;
   final String notas;
@@ -44,6 +45,7 @@ class PosCartState {
     this.metodoPago = MetodoPago.efectivoUsd,
     this.canal = CanalVenta.barra,
     this.tipoOperacion = TipoOperacionVenta.venta,
+    this.numeroTicketCaja = '',
     this.clienteNombre = '',
     this.clienteCedula = '',
     this.notas = '',
@@ -64,6 +66,7 @@ class PosCartState {
     MetodoPago? metodoPago,
     CanalVenta? canal,
     TipoOperacionVenta? tipoOperacion,
+    String? numeroTicketCaja,
     String? clienteNombre,
     String? clienteCedula,
     String? notas,
@@ -75,6 +78,7 @@ class PosCartState {
       metodoPago: metodoPago ?? this.metodoPago,
       canal: canal ?? this.canal,
       tipoOperacion: tipoOperacion ?? this.tipoOperacion,
+      numeroTicketCaja: numeroTicketCaja ?? this.numeroTicketCaja,
       clienteNombre: clienteNombre ?? this.clienteNombre,
       clienteCedula: clienteCedula ?? this.clienteCedula,
       notas: notas ?? this.notas,
@@ -124,6 +128,7 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
   void setMetodoPago(MetodoPago m) => state = state.copyWith(metodoPago: m);
   void setCanal(CanalVenta c) => state = state.copyWith(canal: c);
   void setTipoOperacion(TipoOperacionVenta t) => state = state.copyWith(tipoOperacion: t);
+  void setNumeroTicketCaja(String t) => state = state.copyWith(numeroTicketCaja: t);
   void setClienteNombre(String c) => state = state.copyWith(clienteNombre: c);
   void setClienteCedula(String c) => state = state.copyWith(clienteCedula: c);
   void setCliente({required String nombre, String? cedula}) =>

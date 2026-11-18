@@ -2,10 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../models/cierre_diario_model.dart';
 import '../models/cliente_historial_model.dart';
+import '../models/insumo_model.dart';
+import '../models/movimiento_kardex_model.dart';
 import '../models/movimiento_model.dart';
 import '../models/presentacion_model.dart';
 import '../models/producto_model.dart';
 import '../services/cierre_service.dart';
+import '../services/comandas_service.dart';
+import '../services/insumos_service.dart';
 import '../services/productos_service.dart';
 import '../services/ventas_service.dart';
 
@@ -13,6 +17,37 @@ import '../services/ventas_service.dart';
 final productosServiceProvider = Provider((ref) => ProductosService());
 final ventasServiceProvider = Provider((ref) => VentasService());
 final cierreServiceProvider = Provider((ref) => CierreService());
+final insumosServiceProvider = Provider((ref) => InsumosService());
+final comandasServiceProvider = Provider((ref) => ComandasService());
+
+// Insumos y Kardex
+final insumosFiltroUnidadProvider = StateProvider<String?>((ref) => null);
+final insumosBusquedaProvider = StateProvider<String>((ref) => '');
+
+final listaInsumosProvider =
+    FutureProvider.autoDispose<List<Insumo>>((ref) async {
+  final service = ref.watch(insumosServiceProvider);
+  final unidad = ref.watch(insumosFiltroUnidadProvider);
+  final search = ref.watch(insumosBusquedaProvider);
+  return service.getInsumos(search: search, unidad: unidad);
+});
+
+final movimientosKardexRecientesProvider =
+    FutureProvider.autoDispose<List<MovimientoKardex>>((ref) async {
+  final service = ref.watch(insumosServiceProvider);
+  return service.getMovimientosKardex(limit: 50);
+});
+
+// Resumen de Turno
+final resumenTurnoFechaProvider =
+    StateProvider<DateTime>((ref) => DateTime.now());
+
+final resumenTurnoProvider =
+    FutureProvider.autoDispose<ResumenTurnoData>((ref) async {
+  final service = ref.watch(comandasServiceProvider);
+  final fecha = ref.watch(resumenTurnoFechaProvider);
+  return service.getResumenTurno(fecha: fecha);
+});
 
 // Filtros para Catálogo POS
 final catalogoFiltroCategoriaProvider =

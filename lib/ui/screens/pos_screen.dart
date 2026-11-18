@@ -8,7 +8,9 @@ import '../../models/presentacion_model.dart';
 import '../../models/producto_model.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/pos_cart_provider.dart';
+import '../../services/comandas_service.dart';
 import '../widgets/product_card.dart';
+import '../widgets/resumen_turno_modal.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -21,6 +23,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   late final TextEditingController _clienteCtrl;
   late final TextEditingController _cedulaCtrl;
+  late final TextEditingController _ticketCajaCtrl;
   final TextEditingController _buscarClienteBarCtrl = TextEditingController();
 
   @override
@@ -29,6 +32,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final cart = ref.read(posCartProvider);
     _clienteCtrl = TextEditingController(text: cart.clienteNombre);
     _cedulaCtrl = TextEditingController(text: cart.clienteCedula);
+    _ticketCajaCtrl = TextEditingController(text: cart.numeroTicketCaja);
   }
 
   @override
@@ -36,6 +40,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     _searchCtrl.dispose();
     _clienteCtrl.dispose();
     _cedulaCtrl.dispose();
+    _ticketCajaCtrl.dispose();
     _buscarClienteBarCtrl.dispose();
     super.dispose();
   }
@@ -54,8 +59,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void _limpiarCliente() {
     _clienteCtrl.clear();
     _cedulaCtrl.clear();
+    _ticketCajaCtrl.clear();
     _buscarClienteBarCtrl.clear();
     ref.read(posCartProvider.notifier).setCliente(nombre: '', cedula: '');
+    ref.read(posCartProvider.notifier).setNumeroTicketCaja('');
     setState(() {});
   }
 
@@ -128,11 +135,54 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         descuento: cart.descuento,
       );
 
+      // Sincronizar con el módulo de Comandas e Insumos (con recetas y descuento automático)
+      final String ticketFinal = cart.numeroTicketCaja.trim().isNotEmpty
+          ? cart.numeroTicketCaja.trim()
+          : movimiento.numeroTicket;
+
+      try {
+        final comandaItems = cart.items.map((it) {
+          String prodId = it.presentacion.id;
+          if (it.presentacion.equivalencias.isNotEmpty &&
+              it.presentacion.equivalencias.first.productoId.isNotEmpty) {
+            prodId = it.presentacion.equivalencias.first.productoId;
+          }
+
+          String cat = 'Otros';
+          final catName = it.presentacion.categoria.name.toLowerCase();
+          if (catName.contains('coctel')) {
+            cat = 'Cocteles';
+          } else if (catName.contains('jugo') || catName.contains('noalcohol')) {
+            cat = 'Jugos';
+          } else if (catName.contains('cerv')) {
+            cat = 'Cervezas';
+          }
+
+          return DetalleComandaInput(
+            productoId: prodId,
+            categoria: cat,
+            cantidad: it.cantidad.toDouble(),
+            precioUnitario: it.presentacion.precioVigente,
+          );
+        }).toList();
+
+        await ref.read(comandasServiceProvider).registrarComanda(
+          numeroTicketCaja: ticketFinal,
+          items: comandaItems,
+          clienteNombre: cart.clienteNombre.isNotEmpty ? cart.clienteNombre : null,
+          notas: cart.notas.isNotEmpty ? cart.notas : null,
+        );
+      } catch (comandaErr) {
+        debugPrint('Aviso al sincronizar comanda e insumos: $comandaErr');
+      }
+
       ref.read(posCartProvider.notifier).limpiarCarrito();
       _limpiarCliente();
       ref.invalidate(inventarioProductosProvider);
       ref.invalidate(ultimasVentasProvider);
       ref.invalidate(clientesRegistradosProvider);
+      ref.invalidate(listaInsumosProvider);
+      ref.invalidate(resumenTurnoProvider);
 
       if (!mounted) return;
 
@@ -244,6 +294,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         }
       },
     );
+    ref.listen<String>(
+      posCartProvider.select((s) => s.numeroTicketCaja),
+      (prev, next) {
+        if (_ticketCajaCtrl.text != next) {
+          _ticketCajaCtrl.text = next;
+        }
+      },
+    );
 
     return Scaffold(
       body: Row(
@@ -282,7 +340,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.summarize_outlined, color: AppTheme.secondaryCyan),
+                            tooltip: 'Resumen de Turno (Reporte / PDF / Excel)',
+                            onPressed: () => ResumenTurnoModal.show(context),
+                          ),
+                          const SizedBox(width: 4),
                           IconButton(
                             icon: const Icon(Icons.refresh, color: AppTheme.primaryAmber),
                             tooltip: 'Actualizar catálogo',
@@ -519,6 +583,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.summarize_outlined, color: AppTheme.secondaryCyan, size: 20),
+                    tooltip: 'Resumen de Turno (Reporte / PDF / Excel)',
+                    onPressed: () => ResumenTurnoModal.show(context),
+                  ),
                   if (cart.items.isNotEmpty)
                     TextButton(
                       onPressed: () {
@@ -824,6 +893,36 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 8),
+
+          // Campo: N° Ticket de Caja
+          TextField(
+            controller: _ticketCajaCtrl,
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              labelText: 'N° Ticket de Caja',
+              hintText: 'Ej. TC-0042 o #8492...',
+              hintStyle: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              prefixIcon: const Icon(Icons.confirmation_number_outlined, size: 18, color: AppTheme.primaryAmber),
+              suffixIcon: _ticketCajaCtrl.text.isNotEmpty
+                  ? IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.clear, size: 16, color: AppTheme.textMuted),
+                      onPressed: () {
+                        _ticketCajaCtrl.clear();
+                        ref.read(posCartProvider.notifier).setNumeroTicketCaja('');
+                        setState(() {});
+                      },
+                    )
+                  : null,
+            ),
+            onChanged: (val) {
+              ref.read(posCartProvider.notifier).setNumeroTicketCaja(val.trim());
+              setState(() {});
+            },
           ),
           const SizedBox(height: 8),
 

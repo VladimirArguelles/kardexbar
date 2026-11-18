@@ -12,8 +12,16 @@ enum CategoriaProducto {
   const CategoriaProducto(this.dbValue, this.label);
 
   static CategoriaProducto fromString(String? value) {
+    if (value == null) return CategoriaProducto.otro;
+    final lower = value.toLowerCase();
+    if (lower.contains('coctel')) return CategoriaProducto.coctel;
+    if (lower.contains('jugo') || lower.contains('no_alcoholica')) return CategoriaProducto.bebidaNoAlcoholica;
+    if (lower.contains('cerv')) return CategoriaProducto.cerveza;
+    if (lower.contains('licor')) return CategoriaProducto.licor;
+    if (lower.contains('serv')) return CategoriaProducto.servicio;
+    if (lower.contains('snack')) return CategoriaProducto.snack;
     return CategoriaProducto.values.firstWhere(
-      (e) => e.dbValue == value,
+      (e) => e.dbValue.toLowerCase() == lower,
       orElse: () => CategoriaProducto.otro,
     );
   }
@@ -27,6 +35,7 @@ class Producto {
   final CategoriaProducto categoria;
   final String unidadMedida;
   final double costoUnitario;
+  final double precio;
   final bool esInventariable;
   final double stockActual;
   final double stockMinimo;
@@ -42,6 +51,7 @@ class Producto {
     required this.categoria,
     required this.unidadMedida,
     required this.costoUnitario,
+    this.precio = 0.0,
     required this.esInventariable,
     required this.stockActual,
     required this.stockMinimo,
@@ -65,6 +75,7 @@ class Producto {
       categoria: CategoriaProducto.fromString(json['categoria'] as String?),
       unidadMedida: json['unidad_medida'] as String? ?? 'UND',
       costoUnitario: (json['costo_unitario'] as num?)?.toDouble() ?? 0.0,
+      precio: (json['precio'] as num?)?.toDouble() ?? 0.0,
       esInventariable: json['es_inventariable'] as bool? ?? true,
       stockActual: (json['stock_actual'] as num?)?.toDouble() ?? 0.0,
       stockMinimo: (json['stock_minimo'] as num?)?.toDouble() ?? 0.0,

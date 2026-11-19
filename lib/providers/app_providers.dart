@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../core/config/supabase_config.dart';
 import '../models/cierre_diario_model.dart';
 import '../models/cliente_historial_model.dart';
 import '../models/insumo_model.dart';
@@ -49,7 +50,24 @@ final resumenTurnoProvider =
   return service.getResumenTurno(fecha: fecha);
 });
 
+// Categorías dinámicas desde Supabase
+final categoriasDbListProvider =
+    FutureProvider.autoDispose<List<String>>((ref) async {
+  try {
+    final res = await SupabaseConfig.client
+        .from('categorias')
+        .select('nombre')
+        .eq('activo', true)
+        .order('nombre');
+    return (res as List).map((e) => e['nombre'] as String).toList();
+  } catch (_) {
+    return ['Cervezas', 'Cócteles', 'Licores & Destilados', 'Sin Alcohol & Jugos', 'Otros'];
+  }
+});
+
 // Filtros para Catálogo POS
+final catalogoFiltroCategoriaNombreProvider =
+    StateProvider<String?>((ref) => null);
 final catalogoFiltroCategoriaProvider =
     StateProvider<CategoriaProducto?>((ref) => null);
 final catalogoFiltroCanalProvider =
@@ -60,12 +78,14 @@ final catalogoBusquedaProvider = StateProvider<String>((ref) => '');
 final catalogoVentasProvider =
     FutureProvider.autoDispose<List<PresentacionVenta>>((ref) async {
   final ventasService = ref.watch(ventasServiceProvider);
+  final categoriaNombre = ref.watch(catalogoFiltroCategoriaNombreProvider);
   final categoria = ref.watch(catalogoFiltroCategoriaProvider);
   final canal = ref.watch(catalogoFiltroCanalProvider);
   final search = ref.watch(catalogoBusquedaProvider);
 
   return ventasService.getCatalogoVenta(
     categoria: categoria,
+    categoriaNombre: categoriaNombre,
     canal: canal,
     search: search,
   );

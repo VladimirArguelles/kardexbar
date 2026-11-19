@@ -10,18 +10,31 @@ class VentasService {
   final SupabaseClient _client = SupabaseConfig.client;
   final _uuid = const Uuid();
 
+  static bool matchesCategoria(String raw, String filter) {
+    final r = raw.trim().toLowerCase();
+    final f = filter.trim().toLowerCase();
+    if (r == f) return true;
+    if (f.contains('coctel') || f.contains('cóctel')) return r.contains('coctel') || r.contains('cóctel');
+    if (f.contains('cerv')) return r.contains('cerv');
+    if (f.contains('licor')) return r.contains('licor');
+    if (f.contains('jugo') || f.contains('sin alcohol') || f.contains('no_alcoholica')) {
+      return r.contains('jugo') || r.contains('alcohol') || r.contains('no_alcoholica');
+    }
+    if (f.contains('snack')) return r.contains('snack');
+    if (f.contains('serv') || f.contains('descorche')) return r.contains('serv') || r.contains('descorche');
+    return r.contains(f) || f.contains(r);
+  }
+
   /// Obtiene el catálogo comercial de presentaciones con precios vigentes y recetas
   Future<List<PresentacionVenta>> getCatalogoVenta({
     CategoriaProducto? categoria,
+    String? categoriaNombre,
     CanalVenta? canal,
     String? search,
   }) async {
     // Consultamos la vista de precios vigentes
     var query = _client.from('vista_precios_vigentes').select();
 
-    if (categoria != null) {
-      query = query.eq('categoria', categoria.dbValue);
-    }
     if (canal != null) {
       query = query.eq('canal_venta', canal.dbValue);
     }
@@ -30,9 +43,20 @@ class VentasService {
     }
 
     final data = await query.order('categoria').order('nombre');
-    final presentaciones = (data as List)
+    var presentaciones = (data as List)
         .map((e) => PresentacionVenta.fromJson(e as Map<String, dynamic>))
         .toList();
+
+    // Filtrar por categoría dinámica de Supabase o enum
+    if (categoriaNombre != null && categoriaNombre.isNotEmpty && categoriaNombre != 'TODOS') {
+      presentaciones = presentaciones.where((p) {
+        return matchesCategoria(p.categoria.label, categoriaNombre) ||
+            matchesCategoria(p.categoria.name, categoriaNombre) ||
+            matchesCategoria(p.categoria.dbValue, categoriaNombre);
+      }).toList();
+    } else if (categoria != null) {
+      presentaciones = presentaciones.where((p) => p.categoria == categoria).toList();
+    }
 
     // Traer recetas y equivalencias para desconsolidación visual
     if (presentaciones.isNotEmpty) {

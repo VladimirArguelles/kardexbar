@@ -8,7 +8,6 @@ class ProductCard extends StatelessWidget {
   final int countInCart;
   final VoidCallback onAdd;
   final VoidCallback? onRemove;
-  final VoidCallback? onEditPrice;
 
   const ProductCard({
     super.key,
@@ -16,7 +15,6 @@ class ProductCard extends StatelessWidget {
     this.countInCart = 0,
     required this.onAdd,
     this.onRemove,
-    this.onEditPrice,
   });
 
   @override
@@ -148,29 +146,13 @@ class ProductCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          Formatters.currency(presentacion.precioVigente),
-                          style: const TextStyle(
-                            color: AppTheme.primaryAmber,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        if (onEditPrice != null) ...[
-                          const SizedBox(width: 4),
-                          InkWell(
-                            onTap: onEditPrice,
-                            borderRadius: BorderRadius.circular(4),
-                            child: const Padding(
-                              padding: EdgeInsets.all(3),
-                              child: Icon(Icons.edit, size: 14, color: AppTheme.textMuted),
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      Formatters.currency(presentacion.precioVigente),
+                      style: const TextStyle(
+                        color: AppTheme.primaryAmber,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     if (isSelected)
                       Row(

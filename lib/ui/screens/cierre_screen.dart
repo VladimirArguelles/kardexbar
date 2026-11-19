@@ -79,41 +79,35 @@ class _CierreScreenState extends ConsumerState<CierreScreen> {
         children: [
           // Header de Selección de Fecha y Acciones
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             color: AppTheme.surface,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                const Icon(Icons.calculate_outlined, color: AppTheme.primaryAmber, size: 26),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.calculate_outlined, color: AppTheme.primaryAmber, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Cierre y Arqueo Diario de Barra',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'Fecha de Cuadre: ${Formatters.date(fecha)}',
-                              style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                      const Text(
+                        'Cierre y Arqueo Diario',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        Formatters.date(fecha),
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -123,8 +117,15 @@ class _CierreScreenState extends ConsumerState<CierreScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     OutlinedButton.icon(
-                      icon: const Icon(Icons.calendar_today, size: 16),
-                      label: const Text('Cambiar Fecha'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: const Icon(Icons.calendar_today, size: 15),
+                      label: Text(
+                        '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
                       onPressed: () async {
                         final picked = await showDatePicker(
                           context: context,
@@ -143,9 +144,11 @@ class _CierreScreenState extends ConsumerState<CierreScreen> {
                         }
                       },
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 6),
                     IconButton(
-                      icon: const Icon(Icons.refresh, color: AppTheme.primaryAmber),
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.refresh, color: AppTheme.primaryAmber, size: 20),
+                      tooltip: 'Actualizar arqueo',
                       onPressed: () => ref.invalidate(arqueoCierreProvider),
                     ),
                   ],

@@ -459,44 +459,91 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                     }
 
                     return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // FILA 1: Ícono + Nombre completo en Expanded + Menú de 3 puntos
                             Row(
                               children: [
-                                // Icono de estado
                                 Container(
-                                  padding: const EdgeInsets.all(10),
+                                  padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: estadoColor.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Icon(estadoIcon, color: estadoColor, size: 22),
+                                  child: Icon(estadoIcon, color: estadoColor, size: 20),
                                 ),
-                                const SizedBox(width: 14),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    insumo.nombre,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(Icons.more_vert, color: AppTheme.textMuted, size: 20),
+                                  color: AppTheme.surface,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  onSelected: (val) {
+                                    if (val == 'mover') {
+                                      _mostrarDialogoRegistrarMovimiento(
+                                        context: context,
+                                        insumoPreseleccionado: insumo,
+                                        listaInsumos: insumos,
+                                      );
+                                    } else if (val == 'agotado') {
+                                      _confirmarMarcarAgotado(context, insumo);
+                                    }
+                                  },
+                                  itemBuilder: (ctx) => [
+                                    const PopupMenuItem(
+                                      value: 'mover',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.swap_horiz, size: 18, color: AppTheme.primaryAmber),
+                                          SizedBox(width: 8),
+                                          Text('Mover / Merma', style: TextStyle(fontSize: 13)),
+                                        ],
+                                      ),
+                                    ),
+                                    if (!agotado)
+                                      const PopupMenuItem(
+                                        value: 'agotado',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.do_not_disturb_on_rounded, size: 18, color: AppTheme.errorCoral),
+                                            SizedBox(width: 8),
+                                            Text('Marcar Agotado', style: TextStyle(fontSize: 13, color: AppTheme.errorCoral)),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
 
-                                // Nombre y Badge de estado
+                            // FILA 2: Categoría/unidad a la izquierda + Stock actual y mínimo a la derecha
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
-                                          Flexible(
-                                            child: Text(
-                                              insumo.nombre,
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.textPrimary,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
@@ -513,34 +560,36 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                               ),
                                             ),
                                           ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Unidad: ${insumo.unidadMedida}',
+                                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                          ),
                                         ],
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Unidad: ${insumo.unidadMedida} • Mínimo sugerido: ${Formatters.number(insumo.stockMinimo)}',
-                                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                        'Mínimo: ${Formatters.number(insumo.stockMinimo)} ${insumo.unidadMedida}',
+                                        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
                                       ),
                                     ],
                                   ),
                                 ),
-
-                                const SizedBox(width: 12),
-
-                                // Stock Actual
+                                const SizedBox(width: 8),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
                                       '${Formatters.number(insumo.stockActual)} ${insumo.unidadMedida}',
                                       style: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
                                         color: agotado ? AppTheme.errorCoral : AppTheme.textPrimary,
                                       ),
                                     ),
                                     Text(
                                       'Mín: ${Formatters.number(insumo.stockMinimo)}',
-                                      style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                                      style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
                                     ),
                                   ],
                                 ),
@@ -560,11 +609,9 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                               ),
                             ),
 
-                            const SizedBox(height: 12),
-                            const Divider(color: AppTheme.borderLight, height: 1),
                             const SizedBox(height: 10),
 
-                            // Fila de Acciones: Botón rápido "Marcar Agotado" y Registrar Movimiento
+                            // Fila de Acciones Rápidas
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -574,33 +621,30 @@ class _InventarioScreenState extends ConsumerState<InventarioScreen> {
                                     side: BorderSide(
                                       color: agotado ? AppTheme.textMuted : AppTheme.errorCoral.withValues(alpha: 0.6),
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                     visualDensity: VisualDensity.compact,
                                   ),
                                   onPressed: agotado
                                       ? null
                                       : () => _confirmarMarcarAgotado(context, insumo),
-                                  icon: const Icon(Icons.do_not_disturb_on_rounded, size: 16),
-                                  label: Text(agotado ? 'Agotado' : 'Marcar Agotado'),
+                                  icon: const Icon(Icons.do_not_disturb_on_rounded, size: 15),
+                                  label: Text(agotado ? 'Agotado' : 'Marcar Agotado', style: const TextStyle(fontSize: 11)),
                                 ),
-                                Row(
-                                  children: [
-                                    TextButton.icon(
-                                      style: TextButton.styleFrom(
-                                        visualDensity: VisualDensity.compact,
-                                        foregroundColor: AppTheme.primaryAmber,
-                                      ),
-                                      icon: const Icon(Icons.swap_horiz, size: 16),
-                                      label: const Text('Mover / Merma'),
-                                      onPressed: () {
-                                        _mostrarDialogoRegistrarMovimiento(
-                                          context: context,
-                                          insumoPreseleccionado: insumo,
-                                          listaInsumos: insumos,
-                                        );
-                                      },
-                                    ),
-                                  ],
+                                TextButton.icon(
+                                  style: TextButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                    foregroundColor: AppTheme.primaryAmber,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                  ),
+                                  icon: const Icon(Icons.swap_horiz, size: 16),
+                                  label: const Text('Mover / Merma', style: TextStyle(fontSize: 11)),
+                                  onPressed: () {
+                                    _mostrarDialogoRegistrarMovimiento(
+                                      context: context,
+                                      insumoPreseleccionado: insumo,
+                                      listaInsumos: insumos,
+                                    );
+                                  },
                                 ),
                               ],
                             ),

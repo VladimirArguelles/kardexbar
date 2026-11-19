@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/config/supabase_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/cliente_historial_model.dart';
@@ -91,6 +92,111 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             height: MediaQuery.of(context).size.height * 0.90,
             child: _buildComandaSidebar(context),
           );
+        },
+      ),
+    );
+  }
+
+  void _mostrarDialogoEditarPrecio(BuildContext context, PresentacionVenta p) {
+    final precioCtrl = TextEditingController(text: p.precioVigente.toStringAsFixed(2));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.edit, color: AppTheme.primaryAmber, size: 22),
+            SizedBox(width: 8),
+            Text('Actualizar Precio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(p.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary)),
+            const SizedBox(height: 4),
+            Text('Código: ${p.codigo}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: precioCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Nuevo Precio (\$ USD)',
+                prefixIcon: Icon(Icons.attach_money),
+                isDense: true,
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryAmber,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () async {
+              final nuevoPrecio = double.tryParse(precioCtrl.text.replaceAll(',', '.'));
+              if (nuevoPrecio == null || nuevoPrecio < 0) return;
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.pop(ctx);
+
+              try {
+                // Actualizar en tabla productos
+                String prodId = p.id;
+                if (p.equivalencias.isNotEmpty && p.equivalencias.first.productoId.isNotEmpty) {
+                  prodId = p.equivalencias.first.productoId;
+                }
+                await SupabaseConfig.client
+                    .from('productos')
+                    .update({
+                      'precio': nuevoPrecio,
+                      'updated_at': DateTime.now().toUtc().toIso8601String(),
+                    })
+                    .eq('id', prodId);
+
+                // Actualizar en historial_precios / vista_precios_vigentes
+                await SupabaseConfig.client
+                    .from('historial_precios')
+                    .update({'precio_unitario': nuevoPrecio})
+                    .eq('presentacion_id', p.id)
+                    .eq('activo', true);
+
+                ref.invalidate(catalogoVentasProvider);
+
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Precio de ${p.nombre} actualizado a \$${nuevoPrecio.toStringAsFixed(2)}'),
+                    backgroundColor: AppTheme.successMint,
+                  ),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Error al actualizar precio: $e'), backgroundColor: AppTheme.errorCoral),
+                );
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mostrarDialogoGestionarCategorias(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _DialogoGestionarCategorias(
+        onCategoriaModificada: () {
+          ref.invalidate(catalogoVentasProvider);
         },
       ),
     );
@@ -407,7 +513,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.tune_rounded, color: AppTheme.primaryAmber, size: 20),
+                            tooltip: 'Gestionar Categorías',
+                            style: IconButton.styleFrom(
+                              backgroundColor: AppTheme.surfaceVariant,
+                              padding: const EdgeInsets.all(10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () => _mostrarDialogoGestionarCategorias(context),
+                          ),
+                          const SizedBox(width: 8),
                           Badge(
                             isLabelVisible: cart.totalUnidades > 0,
                             label: Text(
@@ -478,6 +595,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 onRemove: () {
                                   ref.read(posCartProvider.notifier).reducirCantidad(item.id);
                                 },
+                                onEditPrice: () => _mostrarDialogoEditarPrecio(context, item),
                               );
                             },
                           );
@@ -1554,6 +1672,262 @@ class _BuscadorProductoComandaState extends ConsumerState<_BuscadorProductoComan
           ),
         ],
       ],
+    );
+  }
+}
+
+class _DialogoGestionarCategorias extends StatefulWidget {
+  final VoidCallback onCategoriaModificada;
+
+  const _DialogoGestionarCategorias({required this.onCategoriaModificada});
+
+  @override
+  State<_DialogoGestionarCategorias> createState() => _DialogoGestionarCategoriasState();
+}
+
+class _DialogoGestionarCategoriasState extends State<_DialogoGestionarCategorias> {
+  final TextEditingController _nuevaCatCtrl = TextEditingController();
+  bool _isLoading = false;
+  List<Map<String, dynamic>> _categorias = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCategorias();
+  }
+
+  @override
+  void dispose() {
+    _nuevaCatCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _cargarCategorias() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await SupabaseConfig.client
+          .from('categorias')
+          .select()
+          .order('nombre');
+      if (mounted) {
+        setState(() {
+          _categorias = List<Map<String, dynamic>>.from(res as List);
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _crearCategoria() async {
+    final nombre = _nuevaCatCtrl.text.trim();
+    if (nombre.isEmpty) return;
+
+    try {
+      await SupabaseConfig.client.from('categorias').insert({'nombre': nombre});
+      _nuevaCatCtrl.clear();
+      await _cargarCategorias();
+      widget.onCategoriaModificada();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al crear categoría: $e'), backgroundColor: AppTheme.errorCoral),
+        );
+      }
+    }
+  }
+
+  Future<void> _editarCategoria(Map<String, dynamic> cat) async {
+    final editCtrl = TextEditingController(text: cat['nombre']?.toString() ?? '');
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Editar Categoría', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: editCtrl,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Nombre de la categoría', isDense: true),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryAmber, foregroundColor: Colors.black),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Actualizar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true && editCtrl.text.trim().isNotEmpty) {
+      final nuevoNombre = editCtrl.text.trim();
+      final anteriorNombre = cat['nombre'];
+      try {
+        await SupabaseConfig.client
+            .from('categorias')
+            .update({'nombre': nuevoNombre})
+            .eq('id', cat['id']);
+
+        // Reflejar en productos
+        await SupabaseConfig.client
+            .from('productos')
+            .update({'categoria': nuevoNombre})
+            .eq('categoria', anteriorNombre);
+
+        await _cargarCategorias();
+        widget.onCategoriaModificada();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al actualizar categoría: $e'), backgroundColor: AppTheme.errorCoral),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _eliminarCategoria(Map<String, dynamic> cat) async {
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Eliminar Categoría'),
+        content: Text('¿Deseas eliminar la categoría "${cat['nombre']}" de la base de datos?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorCoral, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      try {
+        await SupabaseConfig.client
+            .from('categorias')
+            .delete()
+            .eq('id', cat['id']);
+        await _cargarCategorias();
+        widget.onCategoriaModificada();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al eliminar categoría: $e'), backgroundColor: AppTheme.errorCoral),
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppTheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 560),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.tune_rounded, color: AppTheme.primaryAmber, size: 22),
+                      SizedBox(width: 8),
+                      Text('Gestión de Categorías', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Crear nueva categoría
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _nuevaCatCtrl,
+                      decoration: const InputDecoration(
+                        hintText: 'Nombre de nueva categoría...',
+                        isDense: true,
+                        prefixIcon: Icon(Icons.add_box_outlined, size: 18),
+                      ),
+                      onSubmitted: (_) => _crearCategoria(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryAmber,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    onPressed: _crearCategoria,
+                    child: const Text('Añadir', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: AppTheme.borderLight, height: 1),
+
+              // Lista de categorías
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryAmber))
+                    : _categorias.isEmpty
+                        ? const Center(child: Text('No hay categorías registradas', style: TextStyle(color: AppTheme.textMuted)))
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: _categorias.length,
+                            separatorBuilder: (_, _) => const Divider(color: AppTheme.borderLight, height: 1),
+                            itemBuilder: (context, idx) {
+                              final cat = _categorias[idx];
+                              return ListTile(
+                                dense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                leading: const Icon(Icons.folder_outlined, color: AppTheme.secondaryCyan, size: 20),
+                                title: Text(
+                                  cat['nombre']?.toString() ?? '',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryAmber),
+                                      tooltip: 'Renombrar categoría',
+                                      onPressed: () => _editarCategoria(cat),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, size: 18, color: AppTheme.errorCoral),
+                                      tooltip: 'Eliminar categoría',
+                                      onPressed: () => _eliminarCategoria(cat),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

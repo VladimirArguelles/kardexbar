@@ -204,22 +204,27 @@ class _ResumenTurnoModalState extends ConsumerState<ResumenTurnoModal> {
               border: Border(top: BorderSide(color: AppTheme.borderLight)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  ),
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cerrar'),
                 ),
+                const Spacer(),
                 resumenAsync.maybeWhen(
-                  data: (data) => Wrap(
-                    spacing: 12,
+                  data: (data) => Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // Botón Exportar CSV / Excel
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.secondaryCyan,
                           side: const BorderSide(color: AppTheme.secondaryCyan),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          visualDensity: VisualDensity.compact,
                         ),
                         onPressed: _isExporting
                             ? null
@@ -231,7 +236,7 @@ class _ResumenTurnoModalState extends ConsumerState<ResumenTurnoModal> {
                                   if (!mounted) return;
                                   messenger.showSnackBar(
                                     const SnackBar(
-                                      content: Text('Reporte CSV/Excel generado y listo para guardar'),
+                                      content: Text('Reporte CSV/Excel generado'),
                                       backgroundColor: AppTheme.successMint,
                                     ),
                                   );
@@ -244,16 +249,18 @@ class _ResumenTurnoModalState extends ConsumerState<ResumenTurnoModal> {
                                   if (mounted) setState(() => _isExporting = false);
                                 }
                               },
-                        icon: const Icon(Icons.table_view_rounded, size: 18),
-                        label: const Text('Exportar Excel/CSV'),
+                        icon: const Icon(Icons.table_view_rounded, size: 16),
+                        label: const Text('Excel', style: TextStyle(fontSize: 12)),
                       ),
+                      const SizedBox(width: 8),
 
                       // Botón Imprimir / Guardar PDF
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryAmber,
                           foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          visualDensity: VisualDensity.compact,
                         ),
                         onPressed: _isExporting
                             ? null
@@ -271,8 +278,8 @@ class _ResumenTurnoModalState extends ConsumerState<ResumenTurnoModal> {
                                   if (mounted) setState(() => _isExporting = false);
                                 }
                               },
-                        icon: const Icon(Icons.print_rounded, size: 18, color: Colors.black),
-                        label: const Text('Imprimir / Guardar PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+                        icon: const Icon(Icons.print_rounded, size: 16, color: Colors.black),
+                        label: const Text('Imprimir', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
                     ],
                   ),
@@ -288,38 +295,41 @@ class _ResumenTurnoModalState extends ConsumerState<ResumenTurnoModal> {
 
   Widget _buildMetricMini(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    value,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              maxLines: 1,
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -341,31 +351,31 @@ class _ResumenTurnoModalState extends ConsumerState<ResumenTurnoModal> {
         children: [
           // Header de categoría
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: const BoxDecoration(
               color: AppTheme.surfaceVariant,
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.category_rounded, size: 18, color: AppTheme.primaryAmber),
-                    const SizedBox(width: 8),
-                    Text(
-                      title.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: 0.8,
-                      ),
+                const Icon(Icons.category_rounded, size: 18, color: AppTheme.primaryAmber),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                      letterSpacing: 0.8,
                     ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Text(
-                  '${unidades.toStringAsFixed(0)} unds  •  Subtotal: ${Formatters.currency(subtotal)}',
+                  '${unidades.toStringAsFixed(0)} unds  •  ${Formatters.currency(subtotal)}',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,

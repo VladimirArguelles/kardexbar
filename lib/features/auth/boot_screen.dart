@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../main.dart';
 import 'bartender_login_screen.dart';
 
 /// Pantalla de bienvenida y secuencia de inicio visual de KardexBar
@@ -75,8 +76,12 @@ class _BootScreenState extends State<BootScreen>
     } else {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => BartenderLoginScreen(
-            onLoginSuccess: () {},
+          builder: (loginContext) => BartenderLoginScreen(
+            onLoginSuccess: () {
+              Navigator.of(loginContext).pushReplacement(
+                MaterialPageRoute(builder: (_) => const MainBarLayoutScreen()),
+              );
+            },
           ),
         ),
       );
@@ -102,51 +107,55 @@ class _BootScreenState extends State<BootScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 120,
-                  height: 120,
-                  padding: const EdgeInsets.all(12),
+                  width: 96,
+                  height: 96,
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.primaryAmber.withValues(alpha: 0.4),
-                        blurRadius: 30,
+                        blurRadius: 24,
                         spreadRadius: 2,
                       ),
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 16,
+                        blurRadius: 14,
                         offset: const Offset(0, 6),
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     child: Image.asset(
                       'assets/images/KardexBar-Logo.png',
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.local_bar_rounded,
-                          size: 64,
-                          color: AppTheme.primaryAmber,
+                        return Image.asset(
+                          'assets/images/KardexBar-Logo-transparent.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.local_bar_rounded,
+                            size: 48,
+                            color: AppTheme.primaryAmber,
+                          ),
                         );
                       },
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 const Text(
                   'KARDEXBAR',
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 3.5,
+                    letterSpacing: 3.0,
                     color: AppTheme.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 const Text(
                   'SISTEMA DE CONTROL DE BARRA',
                   style: TextStyle(
@@ -156,9 +165,9 @@ class _BootScreenState extends State<BootScreen>
                     color: AppTheme.secondaryCyan,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
                 SizedBox(
-                  width: 180,
+                  width: 160,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: LinearProgressIndicator(
@@ -171,7 +180,7 @@ class _BootScreenState extends State<BootScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Text(
                   _statusText,
                   style: const TextStyle(

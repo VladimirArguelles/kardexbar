@@ -36,8 +36,24 @@ class KardexBarApp extends StatelessWidget {
       title: 'KardexBar - Control de Barra e Inventario',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const BootScreen(
-        onFinished: null, // Si es null, navega a BartenderLoginScreen
+      home: Builder(
+        builder: (context) => BootScreen(
+          onFinished: () {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (loginContext) => BartenderLoginScreen(
+                  onLoginSuccess: () {
+                    Navigator.of(loginContext).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const MainBarLayoutScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

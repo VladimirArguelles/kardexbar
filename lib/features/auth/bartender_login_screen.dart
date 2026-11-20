@@ -16,15 +16,8 @@ class BartenderLoginScreen extends StatefulWidget {
 }
 
 class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
-  final TextEditingController _pinController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
-
-  @override
-  void dispose() {
-    _pinController.dispose();
-    super.dispose();
-  }
 
   void _iniciarTurnoRapido() async {
     setState(() {
@@ -33,20 +26,20 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
     });
 
     try {
-      // Verificar conectividad con Sede Principal
-      await SupabaseConfig.getSedePrincipalId();
-      widget.onLoginSuccess();
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error de conexión: $e';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      // Sincronizar Sede Principal con timeout para evitar bloqueos por latencia de red
+      await SupabaseConfig.getSedePrincipalId().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => SupabaseConfig.defaultSedePrincipalId,
+      );
+    } catch (_) {
+      // Si la red no responde de inmediato, continúa con la sede fija
     }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    // Redirección inmediata a la sesión operativa de barra
+    widget.onLoginSuccess();
   }
 
   @override
@@ -56,101 +49,121 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 380),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo / Ícono Superior
+                  // Logo Oficial de la Aplicación (Letra K)
                   Container(
-                    width: 88,
-                    height: 88,
+                    width: 72,
+                    height: 72,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceVariant,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.primaryAmber, width: 2),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryAmber.withValues(alpha: 0.25),
+                          color: AppTheme.primaryAmber.withValues(alpha: 0.35),
                           blurRadius: 18,
-                          spreadRadius: 2,
+                          spreadRadius: 1,
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.local_bar,
-                      size: 48,
-                      color: AppTheme.primaryAmber,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.asset(
+                        'assets/images/KardexBar-Logo.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/images/KardexBar-Logo-transparent.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const Icon(
+                              Icons.local_bar_rounded,
+                              size: 40,
+                              color: AppTheme.primaryAmber,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
 
-                  // Título de la Aplicación
+                  // Título Compacto de la Aplicación
                   const Text(
                     'KARDEXBAR',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
+                      letterSpacing: 2.5,
                       color: AppTheme.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   const Text(
                     'Sistema de Control de Barra y Kardex',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: AppTheme.textSecondary,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.3,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
 
-                  // Tarjeta Operativa del Bartender
+                  // Tarjeta Operativa Compacta del Bartender
                   Card(
                     color: AppTheme.surface,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       side: const BorderSide(color: AppTheme.borderLight, width: 1.2),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: AppTheme.surfaceVariant,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(
                                   Icons.person_pin,
                                   color: AppTheme.secondaryCyan,
-                                  size: 26,
+                                  size: 22,
                                 ),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
+                              const SizedBox(width: 10),
+                              const Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'BARTENDER OPERATIVO',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                         color: AppTheme.textPrimary,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                    SizedBox(height: 1),
                                     Text(
                                       'Acceso Rápido de Turno',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11,
                                         color: AppTheme.textMuted,
                                       ),
                                     ),
@@ -159,22 +172,22 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
-                          const Divider(),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
+                          const Divider(height: 1),
+                          const SizedBox(height: 12),
 
                           // Sede Principal Fija
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               color: AppTheme.surfaceVariant,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: AppTheme.borderLight),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.store, color: AppTheme.primaryAmber, size: 20),
-                                const SizedBox(width: 10),
+                                const Icon(Icons.store, color: AppTheme.primaryAmber, size: 18),
+                                const SizedBox(width: 8),
                                 const Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,17 +195,16 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                                       Text(
                                         'SEDE ASIGNADA',
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: 9,
                                           fontWeight: FontWeight.bold,
                                           color: AppTheme.textMuted,
-                                          letterSpacing: 0.8,
+                                          letterSpacing: 0.6,
                                         ),
                                       ),
-                                      SizedBox(height: 2),
                                       Text(
                                         SupabaseConfig.sedePrincipalNombre,
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 13,
                                           fontWeight: FontWeight.bold,
                                           color: AppTheme.textPrimary,
                                         ),
@@ -201,7 +213,7 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                                   decoration: BoxDecoration(
                                     color: AppTheme.successMint.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(6),
@@ -210,7 +222,7 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                                   child: const Text(
                                     'ACTIVA',
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.successMint,
                                     ),
@@ -219,12 +231,12 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
 
                           if (_errorMessage != null) ...[
                             Container(
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 16),
+                              padding: const EdgeInsets.all(10),
+                              margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
                                 color: AppTheme.errorCoral.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
@@ -232,43 +244,44 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                               ),
                               child: Text(
                                 _errorMessage!,
-                                style: const TextStyle(color: AppTheme.errorCoral, fontSize: 13),
+                                style: const TextStyle(color: AppTheme.errorCoral, fontSize: 12),
                               ),
                             ),
                           ],
 
                           // Botón de Inicio Rápido
                           SizedBox(
-                            height: 52,
+                            height: 46,
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _iniciarTurnoRapido,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryAmber,
                                 foregroundColor: AppTheme.background,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: _isLoading
                                   ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
+                                      width: 20,
+                                      height: 20,
                                       child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
+                                        strokeWidth: 2.2,
                                         color: AppTheme.background,
                                       ),
                                     )
                                   : const Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.login, size: 22),
-                                        SizedBox(width: 10),
+                                        Icon(Icons.login, size: 20),
+                                        SizedBox(width: 8),
                                         Text(
                                           'INICIAR TURNO',
                                           style: TextStyle(
-                                            fontSize: 16,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.0,
+                                            letterSpacing: 0.8,
                                           ),
                                         ),
                                       ],
@@ -279,20 +292,20 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
 
                   // Mensaje de trazabilidad
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.sync_alt, size: 16, color: AppTheme.textMuted),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.sync_alt, size: 14, color: AppTheme.textMuted),
+                      const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           'Enlace con ${SupabaseConfig.sedeSecundariaNombre}',
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                         ),
                       ),
                     ],

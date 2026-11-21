@@ -184,94 +184,143 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  // Fila 1: Filtro Cliente y Filtro Producto
-                  Row(
-                    children: [
-                      // FILTRO 1: Buscador por Nombre de Cliente
-                      Expanded(
-                        child: TextField(
-                          controller: _filtroClienteController,
-                          decoration: const InputDecoration(
-                            labelText: 'Filtro 1: Cliente',
-                            hintText: 'Ej. Carlos / Mesa 4',
-                            prefixIcon: Icon(Icons.person_search, color: AppTheme.secondaryCyan, size: 20),
-                            isDense: true,
+                  // Fila 1: Buscador por Cliente y Producto (adaptativo responsive)
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 460;
+                      if (isNarrow) {
+                        return Column(
+                          children: [
+                            TextField(
+                              controller: _filtroClienteController,
+                              decoration: const InputDecoration(
+                                labelText: 'Cliente / Mesa',
+                                hintText: 'Ej. Carlos / Mesa 4',
+                                prefixIcon: Icon(Icons.person_search, color: AppTheme.secondaryCyan, size: 20),
+                                isDense: true,
+                              ),
+                              onChanged: (_) => _cargarComandas(),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _filtroProductoController,
+                              decoration: const InputDecoration(
+                                labelText: 'Producto',
+                                hintText: 'Ej. Mojito / Polar',
+                                prefixIcon: Icon(Icons.local_drink, color: AppTheme.primaryAmber, size: 20),
+                                isDense: true,
+                              ),
+                              onChanged: (_) => _cargarComandas(),
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _filtroClienteController,
+                              decoration: const InputDecoration(
+                                labelText: 'Cliente / Mesa',
+                                hintText: 'Ej. Carlos / Mesa 4',
+                                prefixIcon: Icon(Icons.person_search, color: AppTheme.secondaryCyan, size: 20),
+                                isDense: true,
+                              ),
+                              onChanged: (_) => _cargarComandas(),
+                            ),
                           ),
-                          onChanged: (_) => _cargarComandas(),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // FILTRO 2: Buscador por Producto
-                      Expanded(
-                        child: TextField(
-                          controller: _filtroProductoController,
-                          decoration: const InputDecoration(
-                            labelText: 'Filtro 2: Producto',
-                            hintText: 'Ej. Mojito / Polar',
-                            prefixIcon: Icon(Icons.local_drink, color: AppTheme.primaryAmber, size: 20),
-                            isDense: true,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _filtroProductoController,
+                              decoration: const InputDecoration(
+                                labelText: 'Producto',
+                                hintText: 'Ej. Mojito / Polar',
+                                prefixIcon: Icon(Icons.local_drink, color: AppTheme.primaryAmber, size: 20),
+                                isDense: true,
+                              ),
+                              onChanged: (_) => _cargarComandas(),
+                            ),
                           ),
-                          onChanged: (_) => _cargarComandas(),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 10),
-                  // Fila 2: Selector de Fecha
-                  Row(
+                  // Fila 2: Selector de Fecha y Total Recaudado (con Wrap anti-desborde)
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      InkWell(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _fechaSeleccionada ?? DateTime.now(),
-                            firstDate: DateTime(2025),
-                            lastDate: DateTime(2030),
-                          );
-                          if (picked != null) {
-                            setState(() => _fechaSeleccionada = picked);
-                            _cargarComandas();
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceVariant,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.borderLight),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_month, size: 16, color: AppTheme.secondaryCyan),
-                              const SizedBox(width: 6),
-                              Text(
-                                _fechaSeleccionada != null
-                                    ? DateFormat('dd/MM/yyyy').format(_fechaSeleccionada!)
-                                    : 'Todas las fechas',
-                                style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          InkWell(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _fechaSeleccionada ?? DateTime.now(),
+                                firstDate: DateTime(2025),
+                                lastDate: DateTime(2030),
+                              );
+                              if (picked != null) {
+                                setState(() => _fechaSeleccionada = picked);
+                                _cargarComandas();
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surfaceVariant,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppTheme.borderLight),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.calendar_month, size: 16, color: AppTheme.secondaryCyan),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _fechaSeleccionada != null
+                                        ? DateFormat('dd/MM/yyyy').format(_fechaSeleccionada!)
+                                        : 'Todas las fechas',
+                                    style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                          if (_fechaSeleccionada != null) ...[
+                            const SizedBox(width: 6),
+                            ActionChip(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              label: const Text('Ver todas', style: TextStyle(fontSize: 11)),
+                              backgroundColor: AppTheme.surfaceVariant,
+                              onPressed: () {
+                                setState(() => _fechaSeleccionada = null);
+                                _cargarComandas();
+                              },
+                            ),
+                          ],
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      if (_fechaSeleccionada != null)
-                        ActionChip(
-                          label: const Text('Ver todas las fechas', style: TextStyle(fontSize: 11)),
-                          backgroundColor: AppTheme.surfaceVariant,
-                          onPressed: () {
-                            setState(() => _fechaSeleccionada = null);
-                            _cargarComandas();
-                          },
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryAmber.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.4)),
                         ),
-                      const Spacer(),
-                      // Total en cabecera
-                      Text(
-                        'Total: \$${_totalRecaudado.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryAmber,
+                        child: Text(
+                          'Total: \$${_totalRecaudado.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryAmber,
+                          ),
                         ),
                       ),
                     ],

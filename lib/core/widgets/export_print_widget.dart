@@ -335,40 +335,64 @@ class ExportPrintWidget extends StatelessWidget {
       );
     }
 
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryAmber,
-              foregroundColor: AppTheme.background,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-            icon: const Icon(Icons.print, size: 20),
-            label: Text(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
+        final printBtn = ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryAmber,
+            foregroundColor: AppTheme.background,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          ),
+          icon: const Icon(Icons.print, size: 20),
+          label: Flexible(
+            child: Text(
               buttonLabelPrint ?? 'Imprimir (PDF)',
               style: const TextStyle(fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
-            onPressed: () => ejecutarImpresionPdf(data),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.secondaryCyan,
-              side: const BorderSide(color: AppTheme.secondaryCyan, width: 1.5),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-            icon: const Icon(Icons.table_chart_outlined, size: 20),
-            label: Text(
+          onPressed: () => ejecutarImpresionPdf(data),
+        );
+
+        final exportBtn = OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.secondaryCyan,
+            side: const BorderSide(color: AppTheme.secondaryCyan, width: 1.5),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          ),
+          icon: const Icon(Icons.table_chart_outlined, size: 20),
+          label: Flexible(
+            child: Text(
               buttonLabelExport ?? 'Excel / CSV',
               style: const TextStyle(fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
-            onPressed: () => ejecutarExportacionCsv(data),
           ),
-        ),
-      ],
+          onPressed: () => ejecutarExportacionCsv(data),
+        );
+
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              printBtn,
+              const SizedBox(height: 10),
+              exportBtn,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: printBtn),
+            const SizedBox(width: 12),
+            Expanded(child: exportBtn),
+          ],
+        );
+      },
     );
   }
 }

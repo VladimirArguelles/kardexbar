@@ -247,6 +247,7 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                           // Selector Insumo Origen
                           DropdownButtonFormField<InsumoInventario>(
                             initialValue: _insumoSeleccionado,
+                            isExpanded: true,
                             decoration: InputDecoration(
                               labelText: 'Insumo a Trasladar * (Desde $nombreOrigen)',
                               prefixIcon: const Icon(Icons.inventory_2, color: AppTheme.secondaryCyan),
@@ -254,7 +255,10 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                             items: _insumosOrigen.map((i) {
                               return DropdownMenuItem(
                                 value: i,
-                                child: Text('${i.nombre} (Stock: ${i.stockActual.toStringAsFixed(1)} ${i.unidadMedida})'),
+                                child: Text(
+                                  '${i.nombre} (Stock: ${i.stockActual.toStringAsFixed(1)} ${i.unidadMedida})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) => setState(() => _insumoSeleccionado = val),

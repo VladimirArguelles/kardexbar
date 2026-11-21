@@ -129,7 +129,7 @@ class _EntradasScreenState extends State<EntradasScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Registro de Compras / Entradas'),
+        title: const Text('Compras / Entradas'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -162,9 +162,10 @@ class _EntradasScreenState extends State<EntradasScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Selector de Insumo
+                          // Selector de Insumo con isExpanded y elipsis anti-desborde
                           DropdownButtonFormField<InsumoInventario>(
                             initialValue: _insumoSeleccionado,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Insumo a Ingresar *',
                               prefixIcon: Icon(Icons.inventory_2, color: AppTheme.primaryAmber),
@@ -172,7 +173,10 @@ class _EntradasScreenState extends State<EntradasScreen> {
                             items: _insumos.map((i) {
                               return DropdownMenuItem(
                                 value: i,
-                                child: Text('${i.nombre} (${i.unidadMedida})'),
+                                child: Text(
+                                  '${i.nombre} (${i.unidadMedida})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) {

@@ -33,11 +33,11 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
 
   final List<String> _categorias = [
     'Todas',
-    'Cervezas',
-    'Licores',
     'Cocteles',
-    'Jugos',
-    'No Alcoholicas',
+    'Sin Alcohol & Jugos',
+    'Licores & Destilados',
+    'Cervezas',
+    'Ofertas & Servicios',
   ];
 
   @override
@@ -388,8 +388,8 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                         child: TextFormField(
                           controller: _notasController,
                           decoration: const InputDecoration(
-                            labelText: 'Notas (opcional)',
-                            hintText: 'Ej. Sin hielo / bien frío',
+                            labelText: 'Notas',
+                            hintText: 'Opcional (sin hielo, etc.)',
                             prefixIcon: Icon(
                               Icons.note,
                               color: AppTheme.textMuted,

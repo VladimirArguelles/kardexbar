@@ -263,47 +263,95 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.successMint,
-                                  foregroundColor: AppTheme.background,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                        SizedBox(
+                          height: 52,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.successMint,
+                                    foregroundColor: AppTheme.background,
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  onPressed: () => _mostrarModalOperacionHielo('COMPRA'),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_shopping_cart, size: 18),
+                                      SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          'Comprar Hielo',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                icon: const Icon(Icons.add, size: 20),
-                                label: const Text('+ Comprar Hielo', style: TextStyle(fontWeight: FontWeight.bold)),
-                                onPressed: () => _mostrarModalOperacionHielo('COMPRA'),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.secondaryCyan,
-                                  foregroundColor: AppTheme.background,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.secondaryCyan,
+                                    foregroundColor: AppTheme.background,
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  onPressed: () => _mostrarModalOperacionHielo('TRASLADO'),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.swap_horiz, size: 18),
+                                      SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          'Trasladar Hielo',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                icon: const Icon(Icons.swap_horiz, size: 20),
-                                label: const Text('Trasladar Hielo', style: TextStyle(fontWeight: FontWeight.bold)),
-                                onPressed: () => _mostrarModalOperacionHielo('TRASLADO'),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.errorCoral,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.errorCoral,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  onPressed: () => _mostrarModalOperacionHielo('MERMA'),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.water_drop_outlined, size: 18),
+                                      SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          'Merma / Deshielo',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                icon: const Icon(Icons.water_drop_outlined, size: 20),
-                                label: const Text('Merma / Deshielo', style: TextStyle(fontWeight: FontWeight.bold)),
-                                onPressed: () => _mostrarModalOperacionHielo('MERMA'),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

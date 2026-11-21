@@ -130,7 +130,7 @@ class _MermasScreenState extends State<MermasScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Registro de Mermas y Roturas'),
+        title: const Text('Mermas y Roturas'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -172,6 +172,7 @@ class _MermasScreenState extends State<MermasScreen> {
                           // Selector Insumo
                           DropdownButtonFormField<InsumoInventario>(
                             initialValue: _insumoSeleccionado,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Insumo Mermado *',
                               prefixIcon: Icon(Icons.inventory_2, color: AppTheme.errorCoral),
@@ -179,7 +180,10 @@ class _MermasScreenState extends State<MermasScreen> {
                             items: _insumos.map((i) {
                               return DropdownMenuItem(
                                 value: i,
-                                child: Text('${i.nombre} (Stock: ${i.stockActual.toStringAsFixed(1)} ${i.unidadMedida})'),
+                                child: Text(
+                                  '${i.nombre} (Stock: ${i.stockActual.toStringAsFixed(1)} ${i.unidadMedida})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) => setState(() => _insumoSeleccionado = val),

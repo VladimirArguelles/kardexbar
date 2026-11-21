@@ -79,8 +79,9 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        titleSpacing: 16,
+        titleSpacing: 12,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(6),
@@ -90,73 +91,79 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
               ),
               child: const Icon(Icons.local_bar, color: AppTheme.primaryAmber, size: 20),
             ),
-            const SizedBox(width: 10),
-            const Column(
+            const SizedBox(width: 8),
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                const Text(
                   'KARDEXBAR',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+                    letterSpacing: 1.2,
                     color: AppTheme.textPrimary,
                   ),
                 ),
                 Text(
-                  'Terminal de Barra',
-                  style: TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                  isWide ? 'Terminal de Barra' : 'Barra Principal',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isWide ? FontWeight.normal : FontWeight.w600,
+                    color: isWide ? AppTheme.textSecondary : AppTheme.primaryAmber,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(width: 16),
-            // Badge de Sede Principal fija
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.4)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.store, size: 14, color: AppTheme.primaryAmber),
-                  SizedBox(width: 6),
-                  Text(
-                    SupabaseConfig.sedePrincipalNombre,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryAmber,
+            if (isWide) ...[
+              const SizedBox(width: 16),
+              // Badge de Sede Principal fija en pantalla ancha
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.4)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.store, size: 14, color: AppTheme.primaryAmber),
+                    SizedBox(width: 6),
+                    Text(
+                      SupabaseConfig.sedePrincipalNombre,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryAmber,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
         ),
         actions: [
-          // Enlace con Sede Secundaria
+          // Enlace con Sede Secundaria adaptativo
           Tooltip(
             message: 'Trazabilidad con Sede Secundaria activa',
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppTheme.secondaryCyan.withValues(alpha: 0.4)),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.sync_alt, size: 14, color: AppTheme.secondaryCyan),
-                  SizedBox(width: 6),
+                  const Icon(Icons.sync_alt, size: 14, color: AppTheme.secondaryCyan),
+                  const SizedBox(width: 4),
                   Text(
-                    'Enlace Sede 2',
-                    style: TextStyle(
+                    isWide ? 'Enlace Sede 2' : 'Sede 2',
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.secondaryCyan,
@@ -166,9 +173,8 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.lock_outline, color: AppTheme.textMuted),
+            icon: const Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
             tooltip: 'Bloquear / Salir del Turno',
             onPressed: () {
               Navigator.of(context).pushReplacement(
@@ -184,7 +190,7 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
               );
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
       body: Row(

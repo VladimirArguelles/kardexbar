@@ -145,7 +145,7 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Cierre de Turno y Cuadre Diario'),
+        title: const Text('Cierre de Turno'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -163,10 +163,14 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 10,
                       children: [
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.event_note, color: AppTheme.primaryAmber, size: 22),
                             const SizedBox(width: 10),

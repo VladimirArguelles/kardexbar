@@ -170,7 +170,7 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Consumo Interno (Cortesías)'),
+        title: const Text('Consumo Interno'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -325,9 +325,10 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Selector Insumo
+                          // Selector Insumo (con isExpanded y elipsis anti-desborde)
                           DropdownButtonFormField<InsumoInventario>(
                             initialValue: _insumoSeleccionado,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Insumo / Bebida a Consumir *',
                               prefixIcon: Icon(Icons.local_bar, color: AppTheme.primaryAmber),
@@ -335,14 +336,17 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                             items: _insumos.map((i) {
                               return DropdownMenuItem(
                                 value: i,
-                                child: Text('${i.nombre} (Stock: ${i.stockActual.toStringAsFixed(1)} ${i.unidadMedida})'),
+                                child: Text(
+                                  '${i.nombre} (Stock: ${i.stockActual.toStringAsFixed(1)} ${i.unidadMedida})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) => setState(() => _insumoSeleccionado = val),
                           ),
                           const SizedBox(height: 14),
 
-                          // Cantidad y Beneficiario
+                          // Cantidad y Beneficiario adaptativo anti-desborde
                           Row(
                             children: [
                               Expanded(
@@ -351,10 +355,10 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                   controller: _cantidadController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   decoration: InputDecoration(
-                                    labelText: 'Cantidad *',
+                                    labelText: 'Cant. *',
                                     hintText: 'Ej. 1',
                                     suffixText: _insumoSeleccionado?.unidadMedida ?? '',
-                                    prefixIcon: const Icon(Icons.calculate, color: AppTheme.secondaryCyan),
+                                    prefixIcon: const Icon(Icons.calculate, color: AppTheme.secondaryCyan, size: 20),
                                   ),
                                   validator: (val) {
                                     if (val == null || val.trim().isEmpty) return 'Requerido';
@@ -364,19 +368,19 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               Expanded(
                                 flex: 6,
                                 child: TextFormField(
                                   controller: _beneficiarioController,
                                   decoration: InputDecoration(
                                     labelText: _tipoSeleccionado == 'CONSUMO_DUENO'
-                                        ? 'Nombre del Dueño/Mesa'
-                                        : 'Nombre del Trabajador *',
+                                        ? 'Dueño / Mesa *'
+                                        : 'Trabajador *',
                                     hintText: _tipoSeleccionado == 'CONSUMO_DUENO'
-                                        ? 'Ej. Dueño / Invitados'
-                                        : 'Ej. Juan (Bartender) / Pedro (Seguridad)',
-                                    prefixIcon: const Icon(Icons.person, color: AppTheme.textMuted),
+                                        ? 'Ej. Administración'
+                                        : 'Ej. Bartender / Seguridad',
+                                    prefixIcon: const Icon(Icons.person, color: AppTheme.textMuted, size: 20),
                                   ),
                                   validator: (val) {
                                     if (val == null || val.trim().isEmpty) {

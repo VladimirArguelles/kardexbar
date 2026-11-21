@@ -184,68 +184,100 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Acciones Rápidas del Bartender
+          // Botón unificado con filtro para seleccionar operaciones de kardex (elimina botones repetidos)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      foregroundColor: AppTheme.successMint,
-                      side: const BorderSide(color: AppTheme.successMint),
-                    ),
-                    icon: const Icon(Icons.add_shopping_cart, size: 18),
-                    label: const Text('Entrada / Compra', style: TextStyle(fontSize: 12)),
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const EntradasScreen()),
-                      );
-                      _cargarStock();
-                    },
+            child: PopupMenuButton<String>(
+              tooltip: 'Seleccionar operación de inventario',
+              onSelected: (opcion) async {
+                if (opcion == 'ENTRADA') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EntradasScreen()),
+                  );
+                } else if (opcion == 'TRASLADO') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TrasladosScreen()),
+                  );
+                } else if (opcion == 'MERMA') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MermasScreen()),
+                  );
+                }
+                _cargarStock();
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'ENTRADA',
+                  child: Row(
+                    children: [
+                      Icon(Icons.add_shopping_cart, color: AppTheme.successMint, size: 20),
+                      SizedBox(width: 10),
+                      Text('Entrada / Compra de Insumo', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      foregroundColor: AppTheme.secondaryCyan,
-                      side: const BorderSide(color: AppTheme.secondaryCyan),
-                    ),
-                    icon: const Icon(Icons.swap_horiz, size: 18),
-                    label: const Text('Traslado Sedes', style: TextStyle(fontSize: 12)),
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const TrasladosScreen()),
-                      );
-                      _cargarStock();
-                    },
+                const PopupMenuItem(
+                  value: 'TRASLADO',
+                  child: Row(
+                    children: [
+                      Icon(Icons.swap_horiz, color: AppTheme.secondaryCyan, size: 20),
+                      SizedBox(width: 10),
+                      Text('Traslado Inter-Sedes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      foregroundColor: AppTheme.errorCoral,
-                      side: const BorderSide(color: AppTheme.errorCoral),
-                    ),
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Merma / Rotura', style: TextStyle(fontSize: 12)),
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const MermasScreen()),
-                      );
-                      _cargarStock();
-                    },
+                const PopupMenuItem(
+                  value: 'MERMA',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, color: AppTheme.errorCoral, size: 20),
+                      SizedBox(width: 10),
+                      Text('Merma / Rotura de Insumo', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
                   ),
                 ),
               ],
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.6)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.tune, color: AppTheme.primaryAmber, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Operaciones de Inventario',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryAmber,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Seleccionar acción',
+                          style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_drop_down, color: AppTheme.primaryAmber),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -383,6 +415,8 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                 children: [
                   Text(
                     item.nombre,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -390,13 +424,14 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 2,
                     children: [
                       Text(
                         'Unidad: ${item.unidadMedida}',
                         style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                       ),
-                      const SizedBox(width: 10),
                       Text(
                         'Mínimo: ${item.stockMinimo.toStringAsFixed(0)}',
                         style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),

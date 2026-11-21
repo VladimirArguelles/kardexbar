@@ -129,18 +129,19 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
       child: Scaffold(
         backgroundColor: AppTheme.background,
         appBar: AppBar(
+          toolbarHeight: 64,
           titleSpacing: 12,
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Logo oficial KardexBar
+              // Logo oficial KardexBar con tamaño aumentado
               Image.asset(
                 'assets/images/logo.png',
-                height: 32,
+                height: 48,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Image.asset(
                   'assets/images/KardexBar-Logo.png',
-                  height: 32,
+                  height: 48,
                   fit: BoxFit.contain,
                 ),
               ),

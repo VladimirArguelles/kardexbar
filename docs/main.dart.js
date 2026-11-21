@@ -11240,22 +11240,25 @@ aj7:function aj7(){},
 JO:function JO(){this.d=$
 this.c=this.a=null},
 aCz:function aCz(){},
-m9(a,b,c){return new B.Bg(b,a,c,new B.a0N(null,null,1/0,56),null)},
-b0Y(a,b){var s=B.aQE(a).as
+m9(a,b,c,d){var s=d==null?56:d
+return new B.Bg(b,a,c,new B.a0N(d,null,1/0,s),d,null)},
+b0Y(a,b){var s
+if(b.e==null){s=B.aQE(a).as
 if(s==null)s=56
-return s+0},
+return s+0}return b.b},
 aIF:function aIF(a){this.b=a},
 a0N:function a0N(a,b,c,d){var _=this
 _.e=a
 _.f=b
 _.a=c
 _.b=d},
-Bg:function Bg(a,b,c,d,e){var _=this
+Bg:function Bg(a,b,c,d,e,f){var _=this
 _.e=a
 _.f=b
 _.dy=c
 _.fy=d
-_.a=e},
+_.go=e
+_.a=f},
 a6L:function a6L(a,b){this.a=a
 this.b=b},
 I7:function I7(){var _=this
@@ -55316,16 +55319,16 @@ else{c0.a.toString
 r=!1}p=c1==null
 if(p)o=b5
 else{c1.gNy()
-o=!1}b4.a.toString
-n=b8.as
-if(n==null)n=56
-m=b4.XU(s,b5,b8.gbe(),b9.gbe())
+o=!1}n=b4.a.go
+m=n==null?b8.as:n
+if(m==null)m=56
+l=b4.XU(s,b5,b8.gbe(),b9.gbe())
 b4.a.toString
-l=b8.gbe()
+n=b8.gbe()
 k=B.O(c2).ax
 j=k.p4
-i=b4.XU(s,b5,l,j==null?k.k2:j)
-h=s.n(0,A.vz)?i:m
+i=b4.XU(s,b5,n,j==null?k.k2:j)
+h=s.n(0,A.vz)?i:l
 b4.a.toString
 g=b8.gcY()
 if(g==null)g=b9.gcY()
@@ -55391,7 +55394,7 @@ r=b4.a.dy
 if(r==null)r=b8.z
 if(r==null)r=16
 a0.toString
-b1=B.r0(new B.hl(new B.aIF(n),B.rM(B.hm(new B.Sa(a2,a5,a8,s,r,b5),b5,b5,A.dh,!0,a0,b5,b5,A.bL),d),b5),A.a5,b5)
+b1=B.r0(new B.hl(new B.aIF(m),B.rM(B.hm(new B.Sa(a2,a5,a8,s,r,b5),b5,b5,A.dh,!0,a0,b5,b5,A.bL),d),b5),A.a5,b5)
 b1=B.tX(!1,b1,!0,!1,A.bi,!0,!0)
 s=B.W_(h)
 b2=s===A.bs?A.US:A.UR
@@ -101325,7 +101328,7 @@ o=B.lp(new B.dx(p,o),new B.awN(),o.i("F.E"),t.yp)
 s=B.Z(o,B.k(o).i("F.E"))
 o=t.N
 return new B.pr("Cierre de Turno de Barra","Sede Principal \u2022 Fecha: "+q.eV(r.f),r.f,B.a5(["Total Recaudado","$"+A.o.N(r.gCu()+r.gCt(),2),"Ventas Comandas","$"+A.o.N(r.gCu(),2),"Cobro Consumo Personal","+$"+A.o.N(r.gCt(),2),"Consumo Due\xf1o (Cortes\xeda)",A.o.N(r.gL6(),1)+" unid ($0.00)","Consumo Interno Total",A.o.N(r.gL6()+r.gatl(),1)+" unid","\xcdtems Despachados",A.o.N(r.gZA(),0),"Mermas Turno",A.o.N(r.gZB(),1)+" unid"],o,o),B.b(["Producto","Cant Despachada","P. Unitario","Total Ventas"],t.s),s,"Cuadre generado para arqueo de caja y auditor\xeda f\xedsica de botellas.")},
-I(a){var s,r,q,p,o=this,n=null,m=t.p,l=B.m9(B.b([B.ej(n,n,n,A.eq,n,n,o.gaeM(),n,n,n,"Actualizar datos")],m),A.bbk,n)
+I(a){var s,r,q,p,o=this,n=null,m=t.p,l=B.m9(B.b([B.ej(n,n,n,A.eq,n,n,o.gaeM(),n,n,n,"Actualizar datos")],m),A.bbk,n,n)
 if(o.x)m=A.eP
 else{s=B.f6(new B.aG(A.xL,B.Wx(A.vA,B.b([B.bF(B.b([A.a3F,A.dO,B.bI(B.b([A.bbN,B.ak(o.ai8(o.f),n,n,n,A.Vh,n,n,n)],m),A.bf,A.L,A.O)],m),A.R,A.L,A.b7,0),B.aNm(A.a3J,A.baY,new B.awY(o,a),B.akw(n,n,n,n,n,n,n,n,n,n,n,n,A.jt,n,n,n,n,n,n,A.kL))],m),A.vB,10,12),n),n,n,n)
 r=B.c0(12)
@@ -101499,7 +101502,7 @@ s.toString
 q=t.N
 B.aME(s,new B.pr("Historial de Comandas de Barra","Filtro: "+i,new B.bR(Date.now(),0,!1),B.a5(["Total Comandas",""+J.cd(h.w),"Total Recaudado","$"+A.o.N(h.gZC(),2)],q,q),B.b(["Ticket #","Fecha / Hora","Cliente","Producto","Cant","Total"],r),f,null))},
 I(a){var s,r,q,p,o,n,m,l=this,k=null,j=B.ej(k,k,k,A.eq,k,k,l.gaeK(),k,k,k,"Actualizar historial"),i=t.p
-j=B.m9(B.b([j,B.ej(k,k,k,A.rC,k,k,J.jO(l.w)?k:l.gahz(),k,k,k,"Exportar o Imprimir historial")],i),A.bb6,k)
+j=B.m9(B.b([j,B.ej(k,k,k,A.rC,k,k,J.jO(l.w)?k:l.gahz(),k,k,k,"Exportar o Imprimir historial")],i),A.bb6,k,k)
 s=B.yv(k,k,k,k,k,k,k,k,k,k,k,k,k,A.dZ,k,k,k,k,k,k,A.kL)
 r=l.ganV()
 s=B.bF(B.b([A.bby,new B.H9(!0,r,k,k,k,s,A.V,k,!1,k,!0,k,new B.a3c(A.bbI,A.a3g,s,k,k),k)],i),A.R,A.da,A.O,0)
@@ -101717,7 +101720,7 @@ return B.B($async$wg,r)},
 I(a){var s=this,r=null,q=s.z,p=s.x
 if(!(q==="Todas")){q=J.kQ(p,new B.aDY(s))
 p=B.Z(q,q.$ti.i("F.E"))}q=B.ej(r,r,r,A.eq,r,r,s.gaeO(),r,r,r,"Recargar productos")
-return B.kp(B.m9(B.b([q,B.ej(r,r,r,A.a3o,r,r,s.Q.a!==0?s.ganX():r,r,r,r,"Limpiar comanda")],t.p),A.bbA,r),A.aD,B.DV(new B.aDZ(s,p)),r)},
+return B.kp(B.m9(B.b([q,B.ej(r,r,r,A.a3o,r,r,s.Q.a!==0?s.ganX():r,r,r,r,"Limpiar comanda")],t.p),A.bbA,r,r),A.aD,B.DV(new B.aDZ(s,p)),r)},
 SH(a){var s,r,q,p=this,o=null,n=B.js(!1,p.r,A.a4T,o,o,o,o,new B.aDF()),m=B.c0(10),l=B.fH(A.d4,1),k=t.p
 m=B.f6(new B.aG(A.c7,B.bI(B.b([A.bca,A.cY,n,A.cY,B.bF(B.b([B.cb(B.j7(!1,o,!0,B.ct(o,B.bF(B.b([A.a4n,A.df,B.ak(B.h3("dd/MM/yyyy HH:mm",o).eV(p.f),o,o,o,A.Ve,o,o,o)],k),A.R,A.L,A.O,0),A.V,o,o,new B.bX(A.co,o,l,m,o,o,A.aA),o,o,o,A.a1s,o,o,o),o,!0,o,o,o,o,o,o,o,o,o,new B.aDG(p),o,o,o,o,o,o,o),1),A.f7,B.cb(B.js(!1,p.w,A.a4W,o,o,o,o,o),1)],k),A.R,A.L,A.O,0)],k),A.bf,A.L,A.O),o),o,o,o)
 l=B.c0(10)
@@ -102041,7 +102044,7 @@ r.toString
 q=t.N
 B.aME(r,new B.pr("Reporte de Consumo Interno","Auditor\xeda de Cortes\xedas y Consumos",new B.bR(Date.now(),0,!1),B.a5(["Consumo Due\xf1o",A.o.N(s.gZy(),1)+" unid","Consumo Trabajadores",A.o.N(s.gZz(),1)+" unid","Total Registros",""+s.Q.length],q,q),B.b(["Fecha / Hora","Tipo","Insumo","Cantidad","Beneficiario / Detalle"],t.s),p,null))},
 I(a){var s,r,q,p,o,n,m,l,k,j=this,i=null,h=B.ej(i,i,i,A.eq,i,i,j.gaeL(),i,i,i,"Actualizar consumos"),g=t.p
-h=B.m9(B.b([h,B.ej(i,i,i,A.rC,i,i,j.Q.length===0?i:j.gahB(),i,i,i,"Exportar reporte de consumos")],g),A.baF,i)
+h=B.m9(B.b([h,B.ej(i,i,i,A.rC,i,i,j.Q.length===0?i:j.gahB(),i,i,i,"Exportar reporte de consumos")],g),A.baF,i,i)
 if(j.as)g=A.eP
 else{s=B.c0(12)
 r=B.fH(A.a7,1.5)
@@ -102213,7 +102216,7 @@ q.a=A.aM
 o.scD("Traslado de bolsas de hielo a Sede Secundaria")}s=this.c
 s.toString
 B.aLv(r,r,!0,r,new B.axH(q,this,new B.eH(A.c2,p),o,a),s,r,!0,t.z)},
-I(a){var s,r=this,q=null,p=t.p,o=B.m9(B.b([B.ej(q,q,q,A.eq,q,q,r.gaeN(),q,q,q,q)],p),A.bb_,q)
+I(a){var s,r=this,q=null,p=t.p,o=B.m9(B.b([B.ej(q,q,q,A.eq,q,q,r.gaeN(),q,q,q,q)],p),A.bb_,q,q)
 if(r.w)p=A.eP
 else{p=B.b([A.bbe,A.cY,B.bF(B.b([B.cb(r.SO(!0,r.e,"Barra Operativa Principal","Sede Principal"),1),A.f7,B.cb(r.SO(!1,r.f,"Dep\xf3sito / Respaldo","Sede Secundaria"),1)],p),A.R,A.L,A.O,0),A.iB,B.f6(new B.aG(A.c7,B.bI(B.b([A.baO,A.dv,B.cw(B.bF(B.b([B.cb(B.ot(A.b20,new B.axI(r),B.ii(q,q,A.bV,q,q,q,q,q,q,A.aD,q,q,A.qP,q,new B.cp(B.c0(10),A.T),q,q,q,q,q)),1),A.df,B.cb(B.ot(A.b1Y,new B.axJ(r),B.ii(q,q,A.aM,q,q,q,q,q,q,A.aD,q,q,A.qP,q,new B.cp(B.c0(10),A.T),q,q,q,q,q)),1),A.df,B.cb(B.ot(A.b1W,new B.axK(r),B.ii(q,q,A.aU,q,q,q,q,q,q,A.M,q,q,A.qP,q,new B.cp(B.c0(10),A.T),q,q,q,q,q)),1)],p),A.R,A.L,A.O,0),52,q)],p),A.cd,A.L,A.O),q),q,q,q),A.iC,A.bbp,A.dg],p)
 s=r.r
@@ -102433,7 +102436,7 @@ break
 case 6:case 1:return B.A(q,r)
 case 2:return B.z(o.at(-1),r)}})
 return B.B($async$wu,r)},
-I(a){var s,r,q,p,o,n,m=this,l=null,k=t.p,j=B.m9(B.b([B.ej(l,l,l,A.eq,l,l,m.gahm(),l,l,l,l)],k),A.baX,l)
+I(a){var s,r,q,p,o,n,m=this,l=null,k=t.p,j=B.m9(B.b([B.ej(l,l,l,A.eq,l,l,m.gahm(),l,l,l,l)],k),A.baX,l,l)
 if(m.Q)k=A.eP
 else{s=m.y
 r=J.et(m.x,new B.azD(),t.Vd)
@@ -102579,7 +102582,7 @@ break
 case 6:case 1:return B.A(q,r)
 case 2:return B.z(o.at(-1),r)}})
 return B.B($async$wv,r)},
-I(a){var s,r,q,p,o,n,m,l=this,k=null,j=t.p,i=B.m9(B.b([B.ej(k,k,k,A.eq,k,k,l.gaor(),k,k,k,k)],j),A.bbM,k)
+I(a){var s,r,q,p,o,n,m,l=this,k=null,j=t.p,i=B.m9(B.b([B.ej(k,k,k,A.eq,k,k,l.gaor(),k,k,k,k)],j),A.bbM,k,k)
 if(l.z)j=A.eP
 else{s=l.x
 r=J.et(l.w,new B.aD_(),t.Vd)
@@ -102709,7 +102712,7 @@ q.toString
 s=t.N
 B.aME(q,new B.pr("Inventario F\xedsico - Stock Vivo","Sede Principal",new B.bR(Date.now(),0,!1),B.a5(["Total Insumos",""+J.cd(r.f),"Stock \xd3ptimo",""+r.gTK(),"En M\xednimo",""+r.gTJ(),"Agotados",""+r.gTI()],s,s),B.b(["Insumo","Unidad","Stock","M\xednimo","Estado","Costo Unit"],t.s),p,null))},
 I(a){var s,r,q,p,o=this,n=null,m=B.ej(n,n,n,A.eq,n,n,o.gaeP(),n,n,n,"Actualizar stock"),l=t.p
-m=B.m9(B.b([m,B.ej(n,n,n,A.rC,n,n,J.jO(o.f)?n:o.gahD(),n,n,n,"Exportar informe de inventario")],l),A.bbT,n)
+m=B.m9(B.b([m,B.ej(n,n,n,A.rC,n,n,J.jO(o.f)?n:o.gahD(),n,n,n,"Exportar informe de inventario")],l),A.bbT,n,n)
 s=B.bF(B.b([o.HM("\xd3PTIMO",""+o.gTK(),A.bV,A.a2t,"OPTIMO"),A.df,o.HM("M\xcdNIMO",""+o.gTJ(),A.a7,A.a36,"BAJO"),A.df,o.HM("CR\xcdTICO",""+o.gTI(),A.aU,A.a2Z,"AGOTADO")],l),A.R,A.L,A.O,0)
 r=o.e
 r=B.um(n,A.d7,!1,n,!0,A.a5,n,B.AI(),r,n,n,n,n,n,2,B.oJ(n,n,n,n,n,n,n,n,!0,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,"Buscar insumo (ej. Polar, Hielo, Ron)...",n,n,n,n,n,!0,n,n,n,!0,!0,!1,n,A.a3Y,n,n,n,n,n,n,r.a.a.length!==0?B.ej(n,n,n,A.a3W,n,n,new B.aHK(o),n,n,n,n):n,n,n,n,n,n),A.b5,!0,n,!0,n,!1,n,A.dx,n,n,n,n,n,n,n,n,1,n,n,!1,"\u2022",n,new B.aHL(o),n,n,n,!1,n,n,!1,n,!0,n,A.eT,n,n,n,n,n,n,n,n,n,n,n,n,!0,A.bF,n,A.fa,n,n,n,n)
@@ -102922,7 +102925,7 @@ case 2:return B.z(o.at(-1),r)}})
 return B.B($async$AX,r)},
 I(a){var s,r,q,p,o,n,m,l,k=this,j="Sede Principal",i="Sede Secundaria",h=null,g=k.w===0,f=g?j:i,e=g?i:j
 g=t.p
-s=B.m9(B.b([B.ej(h,h,h,A.eq,h,h,k.gatr(),h,h,h,h)],g),A.bbi,h)
+s=B.m9(B.b([B.ej(h,h,h,A.eq,h,h,k.gatr(),h,h,h,h)],g),A.bbi,h,h)
 if(k.Q)g=A.eP
 else{r=t.S
 r=B.aUd(new B.aIU(k),A.aBj,B.cu([k.w],r),r)
@@ -103173,13 +103176,13 @@ $S:251}
 B.t9.prototype={
 aa(){return new B.a_o()}}
 B.a_o.prototype={
-I(a){var s=this,r=null,q=B.bC(a,r,t.l).w.a.a>=900,p=B.Ds("assets/images/logo.png",new B.aCw(),A.hk,32),o=q?"Terminal de Barra":"Barra Principal",n=q?A.a9:A.hI,m=t.p
+I(a){var s=this,r=null,q=B.bC(a,r,t.l).w.a.a>=900,p=B.Ds("assets/images/logo.png",new B.aCw(),A.hk,48),o=q?"Terminal de Barra":"Barra Principal",n=q?A.a9:A.hI,m=t.p
 n=B.b([p,A.dO,B.ak(o,r,r,r,B.ea(r,r,q?A.d5:A.a7,r,r,r,r,r,r,r,r,10,r,r,n,r,r,!0,r,r,r,r,r,r,r,r),r,r,r)],m)
 if(q){p=B.c0(8)
 A.l.M(n,B.b([A.b4e,B.ct(r,A.b1X,A.V,r,r,new B.bX(A.co,r,B.fH(A.a7.dR(0.4),1),p,r,r,A.aA),r,r,r,A.a1l,r,r,r)],m))}p=B.bF(n,A.R,A.L,A.b7,0)
 o=B.c0(8)
 n=B.fH(A.aM.dR(0.4),1)
-p=B.m9(B.b([B.W2(B.ct(r,B.bF(B.b([A.a3k,A.h_,B.ak(q?"Enlace Sede 2":"Sede 2",r,r,r,A.bab,r,r,r)],m),A.R,A.L,A.b7,0),A.V,r,r,new B.bX(A.co,r,n,o,r,r,A.aA),r,r,A.a1f,A.qQ,r,r,r),r,"Trazabilidad con Sede Secundaria activa",r,r),B.ej(r,r,r,A.a49,r,r,new B.aCx(a),r,r,r,"Bloquear / Salir del Turno"),A.h_],m),p,12)
+p=B.m9(B.b([B.W2(B.ct(r,B.bF(B.b([A.a3k,A.h_,B.ak(q?"Enlace Sede 2":"Sede 2",r,r,r,A.bab,r,r,r)],m),A.R,A.L,A.b7,0),A.V,r,r,new B.bX(A.co,r,n,o,r,r,A.aA),r,r,A.a1f,A.qQ,r,r,r),r,"Trazabilidad con Sede Secundaria activa",r,r),B.ej(r,r,r,A.a49,r,r,new B.aCx(a),r,r,r,"Bloquear / Salir del Turno"),A.h_],m),p,12,64)
 m=B.b([],m)
 if(q)m.push(s.aej())
 m.push(B.cb(s.ae5(),1))
@@ -103231,7 +103234,7 @@ B.aCn.prototype={
 $0(){return B.dd(this.a,!1).ju(!0)},
 $S:0}
 B.aCw.prototype={
-$3(a,b,c){return B.Ds("assets/images/KardexBar-Logo.png",null,A.hk,32)},
+$3(a,b,c){return B.Ds("assets/images/KardexBar-Logo.png",null,A.hk,48)},
 $S:98}
 B.aCx.prototype={
 $0(){var s=0,r=B.C(t.H),q=this,p

@@ -136,7 +136,8 @@ class InventarioService {
       beneficiario_o_motivo,
       referencia_id,
       insumos_inventario (
-        nombre
+        nombre,
+        costo_unitario
       )
     ''');
 

@@ -4,6 +4,7 @@ class KardexMovimiento {
   final DateTime fecha;
   final String insumoId;
   final String? insumoNombre;
+  final double? insumoCostoUnitario;
   final String sedeOrigenId;
   final String? sedeDestinoId;
   final String tipoMovimiento;
@@ -16,6 +17,7 @@ class KardexMovimiento {
     required this.fecha,
     required this.insumoId,
     this.insumoNombre,
+    this.insumoCostoUnitario,
     required this.sedeOrigenId,
     this.sedeDestinoId,
     required this.tipoMovimiento,
@@ -33,6 +35,9 @@ class KardexMovimiento {
           : DateTime.now(),
       insumoId: json['insumo_id'] as String? ?? '',
       insumoNombre: insumoObj != null ? insumoObj['nombre'] as String? : null,
+      insumoCostoUnitario: insumoObj != null
+          ? double.tryParse(insumoObj['costo_unitario']?.toString() ?? '0') ?? 0.0
+          : 0.0,
       sedeOrigenId: json['sede_origen_id'] as String? ?? '',
       sedeDestinoId: json['sede_destino_id'] as String?,
       tipoMovimiento: json['tipo_movimiento'] as String? ?? 'MOVIMIENTO',

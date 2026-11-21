@@ -405,34 +405,57 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Selector Horizontal de Categorías
-          SizedBox(
-            height: 42,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _categorias.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final cat = _categorias[index];
-                final isSelected = cat == _categoriaSeleccionada;
-                return ChoiceChip(
-                  label: Text(cat),
-                  selected: isSelected,
-                  selectedColor: AppTheme.primaryAmber,
-                  backgroundColor: AppTheme.surfaceVariant,
-                  labelStyle: TextStyle(
-                    color: isSelected
-                        ? AppTheme.background
-                        : AppTheme.textPrimary,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+          // Filtro para seleccionar la categoría (Reemplaza los botones horizontales)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.borderLight),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.filter_alt_outlined, color: AppTheme.primaryAmber, size: 20),
+                const SizedBox(width: 10),
+                const Text(
+                  'Categoría:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textSecondary,
                   ),
-                  onSelected: (val) {
-                    if (val) setState(() => _categoriaSeleccionada = cat);
-                  },
-                );
-              },
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _categoriaSeleccionada,
+                      isExpanded: true,
+                      dropdownColor: AppTheme.surface,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryAmber,
+                      ),
+                      icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryAmber),
+                      items: _categorias.map((cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat,
+                          child: Text(
+                            cat == 'Todas' ? 'Todas las categorías' : cat,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _categoriaSeleccionada = val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

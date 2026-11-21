@@ -65,8 +65,40 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
     }
   }
 
-  double get _totalRecaudado =>
+  String _formatearFechaLarga(DateTime fecha) {
+    try {
+      return DateFormat('EEEE, dd/MM/yyyy', 'es_ES').format(fecha);
+    } catch (_) {
+      final dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+      final diaSemana = dias[fecha.weekday - 1];
+      final dia = fecha.day.toString().padLeft(2, '0');
+      final mes = fecha.month.toString().padLeft(2, '0');
+      final anio = fecha.year;
+      return '$diaSemana, $dia/$mes/$anio';
+    }
+  }
+
+  // 1. Ingresos por ventas de comandas
+  double get _totalVentasComandas =>
       _comandasTurno.fold(0.0, (acc, c) => acc + c.precioTotal);
+
+  // 2. Consumo de trabajadores: rebaja del inventario y SÍ suma a los ingresos
+  double get _totalIngresoConsumoTrabajadores => _movimientosTurno
+      .where((m) => m.tipoMovimiento == 'CONSUMO_TRABAJADOR')
+      .fold(0.0, (acc, m) => acc + (m.cantidad * (m.insumoCostoUnitario ?? 1.0)));
+
+  // 3. Consumo de dueños: rebaja del inventario pero NO se suma ni se resta de los ingresos
+  double get _totalUnidadesConsumoDueno => _movimientosTurno
+      .where((m) => m.tipoMovimiento == 'CONSUMO_DUENO')
+      .fold(0.0, (acc, m) => acc + m.cantidad);
+
+  double get _totalUnidadesConsumoTrabajadores => _movimientosTurno
+      .where((m) => m.tipoMovimiento == 'CONSUMO_TRABAJADOR')
+      .fold(0.0, (acc, m) => acc + m.cantidad);
+
+  // Total ingresos / recaudado = Ventas de Comandas + Consumo de Trabajadores
+  double get _totalRecaudado =>
+      _totalVentasComandas + _totalIngresoConsumoTrabajadores;
 
   double get _totalItemsDespachados {
     double total = 0;
@@ -78,9 +110,8 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
     return total;
   }
 
-  double get _totalConsumoInterno => _movimientosTurno
-      .where((m) => m.tipoMovimiento == 'CONSUMO_DUENO' || m.tipoMovimiento == 'CONSUMO_TRABAJADOR')
-      .fold(0.0, (acc, m) => acc + m.cantidad);
+  double get _totalConsumoInterno =>
+      _totalUnidadesConsumoDueno + _totalUnidadesConsumoTrabajadores;
 
   double get _totalMermas => _movimientosTurno
       .where((m) => m.tipoMovimiento == 'MERMA')
@@ -129,9 +160,11 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
       fecha: _fechaCierre,
       resumenKpis: {
         'Total Recaudado': '\$${_totalRecaudado.toStringAsFixed(2)}',
-        'Comandas Atendidas': _comandasTurno.length.toString(),
+        'Ventas Comandas': '\$${_totalVentasComandas.toStringAsFixed(2)}',
+        'Cobro Consumo Personal': '+\$${_totalIngresoConsumoTrabajadores.toStringAsFixed(2)}',
+        'Consumo Dueño (Cortesía)': '${_totalUnidadesConsumoDueno.toStringAsFixed(1)} unid (\$0.00)',
+        'Consumo Interno Total': '${_totalConsumoInterno.toStringAsFixed(1)} unid',
         'Ítems Despachados': _totalItemsDespachados.toStringAsFixed(0),
-        'Consumo Interno': '${_totalConsumoInterno.toStringAsFixed(1)} unid',
         'Mermas Turno': '${_totalMermas.toStringAsFixed(1)} unid',
       },
       columnasTabla: ['Producto', 'Cant Despachada', 'P. Unitario', 'Total Ventas'],
@@ -187,7 +220,7 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                                   ),
                                 ),
                                 Text(
-                                  DateFormat('EEEE, dd/MM/yyyy', 'es_ES').format(_fechaCierre),
+                                  _formatearFechaLarga(_fechaCierre),
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -258,8 +291,8 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${_comandasTurno.length} comandas atendidas',
-                              style: const TextStyle(fontSize: 11, color: AppTheme.secondaryCyan),
+                              'Ventas: \$${_totalVentasComandas.toStringAsFixed(2)} | Cobro pers: +\$${_totalIngresoConsumoTrabajadores.toStringAsFixed(2)}',
+                              style: const TextStyle(fontSize: 10, color: AppTheme.secondaryCyan),
                             ),
                           ],
                         ),
@@ -297,7 +330,7 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Mermas: ${_totalMermas.toStringAsFixed(1)} | Consumo Int: ${_totalConsumoInterno.toStringAsFixed(1)}',
+                              'Dueño: ${_totalUnidadesConsumoDueno.toStringAsFixed(1)} (Cortesía) | Mermas: ${_totalMermas.toStringAsFixed(1)}',
                               style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
                             ),
                           ],

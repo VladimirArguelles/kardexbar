@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/bartender_login_screen.dart';
@@ -8,13 +9,17 @@ import 'features/comandas/screens/historial_comandas_screen.dart';
 import 'features/comandas/screens/nueva_comanda_screen.dart';
 import 'features/consumo_interno/screens/consumo_interno_screen.dart';
 import 'features/hielo/screens/control_hielo_screen.dart';
-import 'features/inventario/screens/entradas_screen.dart';
-import 'features/inventario/screens/mermas_screen.dart';
 import 'features/inventario/screens/stock_vivo_screen.dart';
-import 'features/inventario/screens/traslados_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar localización para formatos de fecha y moneda en español
+  try {
+    await initializeDateFormatting('es_ES', null);
+  } catch (e) {
+    debugPrint('DateFormatting init error: $e');
+  }
 
   // Inicializar Supabase con las credenciales de KardexBar
   try {
@@ -70,138 +75,202 @@ class MainBarLayoutScreen extends StatefulWidget {
 class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
   int _currentIndex = 0;
   int _subIndexComandas = 0;
-  int _subIndexInventario = 0;
 
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 900;
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        titleSpacing: 12,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryAmber.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.local_bar, color: AppTheme.primaryAmber, size: 20),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        // 1. Si no está en Comandas (tab 0), volver a la pestaña principal de Comandas
+        if (_currentIndex != 0) {
+          setState(() => _currentIndex = 0);
+          return;
+        }
+        // 2. Si está en Comandas pero en Historial, regresar a Nueva Comanda
+        if (_subIndexComandas != 0) {
+          setState(() => _subIndexComandas = 0);
+          return;
+        }
+        // 3. Si ya está en la pantalla inicial de Comandas, confirmar salida de la aplicación
+        final salir = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Row(
               children: [
-                const Text(
-                  'KARDEXBAR',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                    color: AppTheme.textPrimary,
-                  ),
+                Icon(Icons.exit_to_app, color: AppTheme.primaryAmber),
+                SizedBox(width: 8),
+                Text('¿Salir de KardexBar?'),
+              ],
+            ),
+            content: const Text('¿Desea cerrar la aplicación o salir del turno actual?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.errorCoral,
+                  foregroundColor: Colors.white,
                 ),
-                Text(
-                  isWide ? 'Terminal de Barra' : 'Barra Principal',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: isWide ? FontWeight.normal : FontWeight.w600,
-                    color: isWide ? AppTheme.textSecondary : AppTheme.primaryAmber,
+                child: const Text('Salir'),
+              ),
+            ],
+          ),
+        );
+        if (salir == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          titleSpacing: 12,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Logo oficial KardexBar
+              Image.asset(
+                'assets/images/logo.png',
+                height: 32,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Image.asset(
+                  'assets/images/KardexBar-Logo.png',
+                  height: 32,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                isWide ? 'Terminal de Barra' : 'Barra Principal',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isWide ? FontWeight.normal : FontWeight.w600,
+                  color: isWide ? AppTheme.textSecondary : AppTheme.primaryAmber,
+                ),
+              ),
+              if (isWide) ...[
+                const SizedBox(width: 16),
+                // Badge de Sede Principal fija en pantalla ancha
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.store, size: 14, color: AppTheme.primaryAmber),
+                      SizedBox(width: 6),
+                      Text(
+                        SupabaseConfig.sedePrincipalNombre,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryAmber,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-            if (isWide) ...[
-              const SizedBox(width: 16),
-              // Badge de Sede Principal fija en pantalla ancha
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            ],
+          ),
+          actions: [
+            // Enlace con Sede Secundaria adaptativo
+            Tooltip(
+              message: 'Trazabilidad con Sede Secundaria activa',
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.4)),
+                  border: Border.all(color: AppTheme.secondaryCyan.withValues(alpha: 0.4)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.store, size: 14, color: AppTheme.primaryAmber),
-                    SizedBox(width: 6),
+                    const Icon(Icons.sync_alt, size: 14, color: AppTheme.secondaryCyan),
+                    const SizedBox(width: 4),
                     Text(
-                      SupabaseConfig.sedePrincipalNombre,
-                      style: TextStyle(
+                      isWide ? 'Enlace Sede 2' : 'Sede 2',
+                      style: const TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryAmber,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.secondaryCyan,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+              tooltip: 'Bloquear / Salir del Turno',
+              onPressed: () async {
+                final confirmar = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Row(
+                      children: [
+                        Icon(Icons.lock_outline, color: AppTheme.primaryAmber),
+                        SizedBox(width: 8),
+                        Text('Bloquear Terminal'),
+                      ],
+                    ),
+                    content: const Text('¿Desea bloquear la pantalla y salir al inicio de turno?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryAmber,
+                          foregroundColor: AppTheme.background,
+                        ),
+                        child: const Text('Bloquear'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmar == true && context.mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (loginContext) => BartenderLoginScreen(
+                        onLoginSuccess: () {
+                          Navigator.of(loginContext).pushReplacement(
+                            MaterialPageRoute(builder: (_) => const MainBarLayoutScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(width: 4),
           ],
         ),
-        actions: [
-          // Enlace con Sede Secundaria adaptativo
-          Tooltip(
-            message: 'Trazabilidad con Sede Secundaria activa',
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.secondaryCyan.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.sync_alt, size: 14, color: AppTheme.secondaryCyan),
-                  const SizedBox(width: 4),
-                  Text(
-                    isWide ? 'Enlace Sede 2' : 'Sede 2',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.secondaryCyan,
-                    ),
-                  ),
-                ],
-              ),
+        body: Row(
+          children: [
+            if (isWide) _buildNavigationRail(),
+            Expanded(
+              child: _buildCurrentScreen(),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
-            tooltip: 'Bloquear / Salir del Turno',
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => BartenderLoginScreen(
-                    onLoginSuccess: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const MainBarLayoutScreen()),
-                      );
-                    },
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 4),
-        ],
+          ],
+        ),
+        bottomNavigationBar: isWide ? null : _buildBottomNavigationBar(),
       ),
-      body: Row(
-        children: [
-          if (isWide) _buildNavigationRail(),
-          Expanded(
-            child: _buildCurrentScreen(),
-          ),
-        ],
-      ),
-      bottomNavigationBar: isWide ? null : _buildBottomNavigationBar(),
     );
   }
 
@@ -224,28 +293,8 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
           ],
         );
 
-      case 1: // INVENTARIO (Stock Vivo, Entradas, Traslados, Mermas)
-        return Column(
-          children: [
-            _buildSubTabBar(
-              selectedIndex: _subIndexInventario,
-              labels: const ['STOCK VIVO', 'ENTRADAS / COMPRAS', 'TRASLADOS', 'MERMAS'],
-              icons: const [Icons.inventory_2, Icons.add_circle_outline, Icons.swap_horiz, Icons.delete_outline],
-              onChanged: (idx) => setState(() => _subIndexInventario = idx),
-            ),
-            Expanded(
-              child: IndexedStack(
-                index: _subIndexInventario,
-                children: const [
-                  StockVivoScreen(),
-                  EntradasScreen(),
-                  TrasladosScreen(),
-                  MermasScreen(),
-                ],
-              ),
-            ),
-          ],
-        );
+      case 1: // INVENTARIO (Stock Vivo directo, operaciones en menú)
+        return const StockVivoScreen();
 
       case 2: // CONTROL DE HIELO
         return const ControlHieloScreen();

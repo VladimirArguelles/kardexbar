@@ -129,29 +129,20 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
       child: Scaffold(
         backgroundColor: AppTheme.background,
         appBar: AppBar(
-          toolbarHeight: 64,
+          toolbarHeight: 70,
           titleSpacing: 12,
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Logo oficial KardexBar con tamaño aumentado
+              // Logo oficial KardexBar con tamaño aumentado y sin textos redundantes al lado
               Image.asset(
                 'assets/images/logo.png',
-                height: 48,
+                height: 56,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Image.asset(
                   'assets/images/KardexBar-Logo.png',
-                  height: 48,
+                  height: 56,
                   fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                isWide ? 'Terminal de Barra' : 'Barra Principal',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isWide ? FontWeight.normal : FontWeight.w600,
-                  color: isWide ? AppTheme.textSecondary : AppTheme.primaryAmber,
                 ),
               ),
               if (isWide) ...[

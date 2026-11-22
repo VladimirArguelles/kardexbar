@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/theme/app_theme.dart';
+import 'login_register_screen.dart';
 
 /// Pantalla de acceso rápido para Bartender único con Sede Principal fija
 class BartenderLoginScreen extends StatefulWidget {
@@ -16,30 +17,16 @@ class BartenderLoginScreen extends StatefulWidget {
 }
 
 class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
-  bool _isLoading = false;
   String? _errorMessage;
 
-  void _iniciarTurnoRapido() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      // Sincronizar Sede Principal con timeout para evitar bloqueos por latencia de red
-      await SupabaseConfig.getSedePrincipalId().timeout(
-        const Duration(seconds: 2),
-        onTimeout: () => SupabaseConfig.defaultSedePrincipalId,
-      );
-    } catch (_) {
-      // Si la red no responde de inmediato, continúa con la sede fija
-    }
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    // Redirección inmediata a la sesión operativa de barra
-    widget.onLoginSuccess();
+  void _irALoginRegistro() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LoginRegisterScreen(
+          onLoginSuccess: widget.onLoginSuccess,
+        ),
+      ),
+    );
   }
 
   @override
@@ -249,66 +236,39 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                             ),
                           ],
 
-                          // Botón de Inicio Rápido
+                          // Botón de Inicio Rápido (redirige a Formulario de Login-Register)
                           SizedBox(
-                            height: 46,
+                            height: 48,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _iniciarTurnoRapido,
+                              onPressed: _irALoginRegistro,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryAmber,
                                 foregroundColor: AppTheme.background,
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.2,
-                                        color: AppTheme.background,
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.login, size: 20),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'INICIAR TURNO',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 0.8,
-                                          ),
-                                        ),
-                                      ],
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.login, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'INICIAR TURNO',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.8,
                                     ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Mensaje de trazabilidad
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.sync_alt, size: 14, color: AppTheme.textMuted),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          'Enlace con ${SupabaseConfig.sedeSecundariaNombre}',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),

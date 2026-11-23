@@ -6,8 +6,9 @@ import '../../../core/widgets/export_print_widget.dart';
 import '../../../core/widgets/ticket_pos_barra.dart';
 import '../models/comanda_model.dart';
 import '../services/comandas_service.dart';
+import 'ver_registro_screen.dart';
 
-/// Pantalla de Historial de Comandas con Doble Buscador (Cliente y Producto)
+/// Pantalla de Historial de Comandas — Restringida al día en curso
 class HistorialComandasScreen extends StatefulWidget {
   const HistorialComandasScreen({super.key});
 
@@ -22,15 +23,13 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
   final _filtroClienteController = TextEditingController();
   final _filtroProductoController = TextEditingController();
 
-  DateTime? _fechaSeleccionada;
+  final DateTime _fechaHoy = DateTime.now();
   List<Comanda> _comandas = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Por defecto hoy
-    _fechaSeleccionada = DateTime.now();
     _cargarComandas();
   }
 
@@ -45,7 +44,7 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
     setState(() => _isLoading = true);
     try {
       final list = await _service.getHistorialComandas(
-        fecha: _fechaSeleccionada,
+        fecha: _fechaHoy,
         filtroCliente: _filtroClienteController.text,
         filtroProducto: _filtroProductoController.text,
       );
@@ -72,7 +71,6 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
     setState(() {
       _filtroClienteController.clear();
       _filtroProductoController.clear();
-      _fechaSeleccionada = DateTime.now();
     });
     _cargarComandas();
   }
@@ -109,17 +107,16 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
       }
     }
 
-    final fechaTitulo = _fechaSeleccionada != null
-        ? DateFormat('dd/MM/yyyy').format(_fechaSeleccionada!)
-        : 'Todas las fechas';
+    final fechaTitulo = DateFormat('dd/MM/yyyy').format(_fechaHoy);
 
     ExportPrintWidget.showModal(
       context,
       data: ReporteExportData(
-        titulo: 'Historial de Comandas de Barra',
-        subtitulo: 'Filtro: $fechaTitulo',
+        titulo: 'Comandas del Día en Curso',
+        subtitulo: 'Fecha: $fechaTitulo',
         fecha: DateTime.now(),
         resumenKpis: {
+          'Fecha': fechaTitulo,
           'Total Comandas': '${_comandas.length}',
           'Total Recaudado': '\$${_totalRecaudado.toStringAsFixed(2)}',
         },
@@ -143,6 +140,25 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
       appBar: AppBar(
         title: const Text('Historial de Comandas'),
         actions: [
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryAmber,
+              foregroundColor: AppTheme.background,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              visualDensity: VisualDensity.compact,
+            ),
+            icon: const Icon(Icons.calendar_month, size: 16),
+            label: const Text(
+              'VER REGISTRO',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const VerRegistroScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Actualizar historial',
@@ -150,7 +166,7 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.print_outlined),
-            tooltip: 'Exportar o Imprimir historial',
+            tooltip: 'Exportar o Imprimir historial de hoy',
             onPressed: _comandas.isEmpty ? null : _exportarHistorial,
           ),
         ],
@@ -278,7 +294,7 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
-                  // Fila 2: Selector de Fecha y Total Recaudado (con Wrap anti-desborde)
+                  // Fila 2: Indicador de Día en Curso y Total Recaudado (con Wrap anti-desborde)
                   Wrap(
                     alignment: WrapAlignment.spaceBetween,
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -288,71 +304,69 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          InkWell(
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate:
-                                    _fechaSeleccionada ?? DateTime.now(),
-                                firstDate: DateTime(2025),
-                                lastDate: DateTime(2030),
-                              );
-                              if (picked != null) {
-                                setState(() => _fechaSeleccionada = picked);
-                                _cargarComandas();
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 7,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppTheme.secondaryCyan.withValues(
+                                  alpha: 0.4,
+                                ),
                               ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surfaceVariant,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppTheme.borderLight),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_month,
-                                    size: 16,
-                                    color: AppTheme.secondaryCyan,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.today,
+                                  size: 16,
+                                  color: AppTheme.secondaryCyan,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Día en curso: ${DateFormat('dd/MM/yyyy').format(_fechaHoy)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _fechaSeleccionada != null
-                                        ? DateFormat('dd/MM/yyyy')
-                                              .format(_fechaSeleccionada!)
-                                        : 'Todas las fechas',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                          if (_fechaSeleccionada != null) ...[
-                            const SizedBox(width: 6),
-                            ActionChip(
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.primaryAmber,
+                              side: const BorderSide(
+                                color: AppTheme.primaryAmber,
+                              ),
                               visualDensity: VisualDensity.compact,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
+                                horizontal: 10,
+                                vertical: 6,
                               ),
-                              label: const Text(
-                                'Ver todas',
-                                style: TextStyle(fontSize: 11),
-                              ),
-                              backgroundColor: AppTheme.surfaceVariant,
-                              onPressed: () {
-                                setState(() => _fechaSeleccionada = null);
-                                _cargarComandas();
-                              },
                             ),
-                          ],
+                            icon: const Icon(Icons.calendar_month, size: 15),
+                            label: const Text(
+                              'Buscador Calendario',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const VerRegistroScreen(),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                       Container(
@@ -389,28 +403,59 @@ class _HistorialComandasScreenState extends State<HistorialComandasScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _comandas.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.receipt_long,
-                          size: 54,
-                          color: AppTheme.textMuted,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'No se encontraron comandas con los filtros actuales',
-                          style: TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 14,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.receipt_long,
+                            size: 54,
+                            color: AppTheme.textMuted,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton(
-                          onPressed: _limpiarFiltros,
-                          child: const Text('Restablecer Filtros'),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Text(
+                            'No hay comandas registradas en el día de hoy (${DateFormat('dd/MM/yyyy').format(_fechaHoy)}) con los filtros actuales',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 10,
+                            runSpacing: 8,
+                            children: [
+                              OutlinedButton(
+                                onPressed: _limpiarFiltros,
+                                child: const Text('Restablecer Filtros'),
+                              ),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryAmber,
+                                  foregroundColor: AppTheme.background,
+                                ),
+                                icon: const Icon(
+                                  Icons.calendar_month,
+                                  size: 16,
+                                ),
+                                label: const Text(
+                                  'Consultar otras fechas en Ver Registro',
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const VerRegistroScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : ListView.builder(

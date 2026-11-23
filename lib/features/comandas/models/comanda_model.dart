@@ -102,6 +102,7 @@ class Comanda {
   final String mesa;
   final String mesero;
   final int ronda;
+  final String? metodoPago;
   final List<ComandaDetalle> detalles;
 
   Comanda({
@@ -116,6 +117,7 @@ class Comanda {
     this.mesa = 'BARRA',
     this.mesero = 'ILARIO MEDINA',
     this.ronda = 1,
+    this.metodoPago,
     this.detalles = const [],
   });
 
@@ -146,6 +148,7 @@ class Comanda {
       mesa: json['mesa'] as String? ?? 'BARRA',
       mesero: json['mesero'] as String? ?? 'ILARIO MEDINA',
       ronda: int.tryParse(json['ronda']?.toString() ?? '1') ?? 1,
+      metodoPago: json['metodo_pago'] as String?,
       detalles: detallesRaw
           .map((d) => ComandaDetalle.fromJson(d as Map<String, dynamic>))
           .toList(),

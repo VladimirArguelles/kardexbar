@@ -295,9 +295,7 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
         metodoPago: metodoSeleccionado,
       );
 
-      // Imprimir ticket de cuenta final
-      await _imprimirTicketPrecuenta(cmd);
-
+      // Recargar mesas abiertas tras registro exitoso
       await _cargarMesas();
 
       if (mounted) {

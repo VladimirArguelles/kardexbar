@@ -160,25 +160,11 @@ class ComandasService {
       )
     ''');
 
-    // Filtro por fecha si se especifica
+    // Filtro por fecha si se especifica (usando formato YYYY-MM-DD para columna fecha de PostgreSQL)
     if (fecha != null) {
-      final inicioDia = DateTime(
-        fecha.year,
-        fecha.month,
-        fecha.day,
-        0,
-        0,
-        0,
-      ).toIso8601String();
-      final finDia = DateTime(
-        fecha.year,
-        fecha.month,
-        fecha.day,
-        23,
-        59,
-        59,
-      ).toIso8601String();
-      query = query.gte('fecha', inicioDia).lte('fecha', finDia);
+      final dateStr =
+          '${fecha.year.toString().padLeft(4, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+      query = query.eq('fecha', dateStr);
     }
 
     // Filtro 1: Buscador por Nombre de Cliente
@@ -186,19 +172,27 @@ class ComandasService {
       query = query.ilike('nombre_cliente', '%${filtroCliente.trim()}%');
     }
 
-    final response = await query.order('fecha', ascending: false).limit(100);
+    final response = await query
+        .order('created_at', ascending: false)
+        .limit(100);
 
     List<Comanda> list = (response as List<dynamic>)
         .map((c) => Comanda.fromJson(c as Map<String, dynamic>))
         .toList();
 
-    // Filtro 2: Buscador por Producto (filtra comandas que contengan el producto)
+    // Filtro 2: Buscador por Producto (coincidencia de todas las palabras clave para mayor flexibilidad)
     if (filtroProducto != null && filtroProducto.trim().isNotEmpty) {
-      final prodLower = filtroProducto.trim().toLowerCase();
+      final palabras = filtroProducto
+          .trim()
+          .toLowerCase()
+          .split(RegExp(r'\s+'))
+          .where((w) => w.isNotEmpty)
+          .toList();
       list = list.where((cmd) {
-        return cmd.detalles.any(
-          (d) => d.nombreProducto.toLowerCase().contains(prodLower),
-        );
+        return cmd.detalles.any((d) {
+          final prodName = d.nombreProducto.toLowerCase();
+          return palabras.every((p) => prodName.contains(p));
+        });
       }).toList();
     }
 

@@ -1069,29 +1069,7 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
         metodoPago: metodoSeleccionado,
       );
 
-      // Imprimir ticket de cuenta final consolidada
-      final todosLosItems = cmd.detalles.map((d) {
-        return TicketItemData(
-          cantidad: d.cantidad,
-          nombreProducto: d.nombreProducto,
-          precioUnitario: d.precioUnitario,
-        );
-      }).toList();
-
-      final ticketFinal = TicketPosData(
-        ordenArea: cmd.mesa,
-        cliente: cmd.nombreCliente,
-        mesero: cmd.mesero,
-        fecha: DateTime.now(),
-        ronda: cmd.ronda,
-        numeroOrden: cmd.numeroTicket ?? cmd.id.substring(0, 8).toUpperCase(),
-        items: todosLosItems,
-        notasCoordinacion: 'CUENTA CANCELADA EN $metodoSeleccionado',
-        total: cmd.precioTotal,
-      );
-
-      await TicketPosBarra.imprimirTicket(ticketFinal);
-
+      // Recargar mesas abiertas y resetear formulario tras registro exitoso
       await _cargarMesasAbiertas();
 
       if (mounted) {

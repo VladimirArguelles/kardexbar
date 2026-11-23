@@ -10,6 +10,7 @@ import 'features/comandas/models/comanda_model.dart';
 import 'features/comandas/screens/historial_comandas_screen.dart';
 import 'features/comandas/screens/mesas_abiertas_screen.dart';
 import 'features/comandas/screens/nueva_comanda_screen.dart';
+import 'features/comandas/screens/ver_registro_screen.dart';
 import 'features/consumo_interno/screens/consumo_interno_screen.dart';
 import 'features/hielo/screens/control_hielo_screen.dart';
 import 'features/inventario/screens/stock_vivo_screen.dart';
@@ -314,11 +315,13 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                 'MESAS ABIERTAS',
                 'NUEVA COMANDA',
                 'HISTORIAL DE COMANDAS',
+                'VER REGISTRO',
               ],
               icons: const [
                 Icons.table_restaurant,
                 Icons.add_shopping_cart,
                 Icons.receipt_long,
+                Icons.calendar_month,
               ],
               onChanged: (idx) {
                 setState(() {
@@ -355,7 +358,9 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                         });
                       },
                     )
-                  : const HistorialComandasScreen(),
+                  : _subIndexComandas == 2
+                  ? const HistorialComandasScreen()
+                  : const VerRegistroScreen(),
             ),
           ],
         );

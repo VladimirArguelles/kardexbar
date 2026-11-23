@@ -95,6 +95,7 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
 
       setState(() {
         _procesando = false;
+        _mensajeError = null;
         _ticketController.text = result.numeroTicket ?? '';
         _clienteController.text = result.cliente ?? '';
         _meseroController.text = result.mesero ?? '';
@@ -104,6 +105,7 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
       if (!mounted) return;
       setState(() {
         _procesando = false;
+        _imageBytes = null;
         _mensajeError = e.toString().replaceAll('Exception: ', '');
       });
     }
@@ -249,7 +251,7 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
               Expanded(
                 child: _procesando
                     ? _buildVistaProcesando()
-                    : _imageBytes == null
+                    : (_imageBytes == null || _mensajeError != null)
                     ? _buildVistaSeleccionarOrigen()
                     : _buildVistaRevision(),
               ),

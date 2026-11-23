@@ -88,12 +88,13 @@ Deno.serve(async (req: Request) => {
 
   try {
     // 1. Validar variable de entorno de Gemini API
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiApiKey) {
+    const rawApiKey = Deno.env.get('GEMINI_API_KEY');
+    const geminiApiKey = rawApiKey?.trim().replace(/^["']|["']$/g, '');
+    if (!geminiApiKey || geminiApiKey.length < 10) {
       return new Response(
         JSON.stringify({
           error:
-            'La variable de entorno GEMINI_API_KEY no está configurada en el proyecto de Supabase.',
+            'La variable de entorno GEMINI_API_KEY no está configurada o es inválida en el proyecto de Supabase.',
         }),
         {
           status: 500,
@@ -278,9 +279,17 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
         `Gemini Vision API error (${geminiResponse.status}):`,
         errorText
       );
+      let parsedError = errorText;
+      try {
+        const errJson = JSON.parse(errorText);
+        if (errJson.error?.message) {
+          parsedError = errJson.error.message;
+        }
+      } catch (_) {}
+
       return new Response(
         JSON.stringify({
-          error: `Error devuelto por Gemini Vision API (${geminiResponse.status}).`,
+          error: `Error Gemini Vision API (${geminiResponse.status}): ${parsedError}`,
           details: errorText,
         }),
         {

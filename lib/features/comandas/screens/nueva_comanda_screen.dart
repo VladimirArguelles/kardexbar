@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/config/supabase_config.dart';
@@ -161,7 +163,9 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
     for (final item in _carrito.values) {
       final ProductoBarra prod = item['producto'] as ProductoBarra;
       final double cant = (item['cantidad'] as num).toDouble();
-      total += (cant * prod.precioVenta);
+      final double precio =
+          (item['precio_unitario'] as num?)?.toDouble() ?? prod.precioVenta;
+      total += (cant * precio);
     }
     return total;
   }
@@ -179,27 +183,578 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
   }
 
   void _agregarOIncrementar(ProductoBarra prod) {
+    final nombreLower = prod.nombre.toLowerCase();
+    if (nombreLower.contains('promo coctel')) {
+      _mostrarDialogoPromoCocteles(prod);
+      return;
+    }
+    if (nombreLower.contains('promo balde')) {
+      _mostrarDialogoPromoBalde(prod);
+      return;
+    }
+
     setState(() {
       if (_carrito.containsKey(prod.id)) {
         _carrito[prod.id]!['cantidad'] =
-            (_carrito[prod.id]!['cantidad'] as double) + 1.0;
+            (_carrito[prod.id]!['cantidad'] as num).toDouble() + 1.0;
       } else {
-        _carrito[prod.id] = {'producto': prod, 'cantidad': 1.0};
+        _carrito[prod.id] = {
+          'producto': prod,
+          'cantidad': 1.0,
+          'precio_unitario': prod.precioVenta,
+          'nombre_personalizado': prod.nombre,
+        };
       }
     });
   }
 
-  void _decrementar(String prodId) {
+  void _incrementar(String key) {
     setState(() {
-      if (_carrito.containsKey(prodId)) {
-        final cantActual = _carrito[prodId]!['cantidad'] as double;
+      if (_carrito.containsKey(key)) {
+        final cantActual = (_carrito[key]!['cantidad'] as num).toDouble();
+        _carrito[key]!['cantidad'] = cantActual + 1.0;
+      }
+    });
+  }
+
+  void _decrementar(String key) {
+    setState(() {
+      if (_carrito.containsKey(key)) {
+        final cantActual = (_carrito[key]!['cantidad'] as num).toDouble();
         if (cantActual > 1.0) {
-          _carrito[prodId]!['cantidad'] = cantActual - 1.0;
+          _carrito[key]!['cantidad'] = cantActual - 1.0;
         } else {
-          _carrito.remove(prodId);
+          _carrito.remove(key);
         }
       }
     });
+  }
+
+  /// Diálogo táctil para seleccionar los 2 cócteles de la promoción 2x1.
+  /// Calcula automáticamente el precio colocando el valor del cóctel de mayor valor.
+  Future<void> _mostrarDialogoPromoCocteles(ProductoBarra prodPromo) async {
+    final cocteles = _productos
+        .where((p) => p.categoria.toLowerCase().contains('coctel') && p.activo)
+        .toList();
+
+    if (cocteles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay cócteles activos disponibles en el catálogo'),
+          backgroundColor: AppTheme.warningAmber,
+        ),
+      );
+      return;
+    }
+
+    ProductoBarra coctel1 = cocteles.first;
+    ProductoBarra coctel2 = cocteles.length > 1 ? cocteles[1] : cocteles.first;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final p1 = coctel1.precioVenta;
+          final p2 = coctel2.precioVenta;
+          final precioFinal = math.max(p1, p2);
+          final ahorro = math.min(p1, p2);
+
+          return AlertDialog(
+            backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppTheme.primaryAmber, width: 1.5),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryAmber.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.local_bar,
+                    color: AppTheme.primaryAmber,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Promo Cócteles (2x1)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Paga el cóctel de mayor valor',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Seleccionar Cóctel 1:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.borderLight),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<ProductoBarra>(
+                        value: coctel1,
+                        isExpanded: true,
+                        dropdownColor: AppTheme.surface,
+                        items: cocteles.map((c) {
+                          return DropdownMenuItem<ProductoBarra>(
+                            value: c,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    c.nombre,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  '\$${c.precioVenta.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryAmber,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() => coctel1 = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Seleccionar Cóctel 2:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.borderLight),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<ProductoBarra>(
+                        value: coctel2,
+                        isExpanded: true,
+                        dropdownColor: AppTheme.surface,
+                        items: cocteles.map((c) {
+                          return DropdownMenuItem<ProductoBarra>(
+                            value: c,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    c.nombre,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  '\$${c.precioVenta.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryAmber,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() => coctel2 = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Caja de cálculo dinámico y comparativa
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppTheme.primaryAmber.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              coctel1.nombre,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              '\$${p1.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              coctel2.nombre,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              '\$${p2.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'PRECIO PROMO (Mayor Valor):',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              '\$${precioFinal.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryAmber,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.successMint.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '¡Ahorras \$${ahorro.toStringAsFixed(2)}! El cóctel de menor valor es GRATIS',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.successMint,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryAmber,
+                  foregroundColor: AppTheme.background,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.add_shopping_cart, size: 18),
+                label: Text(
+                  'Añadir Promo (\$${precioFinal.toStringAsFixed(2)})',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  final key =
+                      'promo_coctel_${DateTime.now().millisecondsSinceEpoch}';
+                  setState(() {
+                    _carrito[key] = {
+                      'producto': prodPromo,
+                      'nombre_personalizado':
+                          'Promo Cócteles 2x1 (${coctel1.nombre} + ${coctel2.nombre})',
+                      'precio_unitario': precioFinal,
+                      'cantidad': 1.0,
+                      'coctel1': coctel1,
+                      'coctel2': coctel2,
+                    };
+                  });
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Diálogo táctil para seleccionar la cerveza del balde (12 unidades) por REF. 10.00
+  Future<void> _mostrarDialogoPromoBalde(ProductoBarra prodPromo) async {
+    final cervezas = _productos
+        .where(
+          (p) =>
+              p.categoria.toLowerCase().contains('cerveza') &&
+              p.activo &&
+              !p.nombre.toLowerCase().contains('balde') &&
+              !p.nombre.toLowerCase().contains('caja'),
+        )
+        .toList();
+
+    ProductoBarra? cervezaSeleccionada = cervezas.isNotEmpty
+        ? cervezas.first
+        : null;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppTheme.primaryAmber, width: 1.5),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryAmber.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.sports_bar,
+                    color: AppTheme.primaryAmber,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Promo Balde (12 Cervezas)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Promoción REF. \$10.00',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Seleccionar Cerveza del Balde:',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (cervezas.isEmpty)
+                  const Text('No hay cervezas registradas en catálogo')
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.borderLight),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<ProductoBarra>(
+                        value: cervezaSeleccionada,
+                        isExpanded: true,
+                        dropdownColor: AppTheme.surface,
+                        items: cervezas.map((c) {
+                          return DropdownMenuItem<ProductoBarra>(
+                            value: c,
+                            child: Text(c.nombre),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() => cervezaSeleccionada = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Contenido:'),
+                      Text(
+                        '12 Cervezas',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryAmber,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'TOTAL PROMO BALDE:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '\$10.00',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryAmber,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryAmber,
+                  foregroundColor: AppTheme.background,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.add_shopping_cart, size: 18),
+                label: const Text(
+                  'Añadir Promo Balde (\$10.00)',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  final nombreCerveza =
+                      cervezaSeleccionada?.nombre ?? 'Polar Light';
+                  final key =
+                      'promo_balde_${cervezaSeleccionada?.id ?? "def"}_${DateTime.now().millisecondsSinceEpoch}';
+                  setState(() {
+                    _carrito[key] = {
+                      'producto': prodPromo,
+                      'nombre_personalizado':
+                          'Promo Balde (12x $nombreCerveza)',
+                      'precio_unitario': 10.00,
+                      'cantidad': 1.0,
+                    };
+                  });
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   /// Acción principal: DESPACHAR RONDA A CUENTA ABIERTA
@@ -232,25 +787,49 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
       final notasComanda = _notasController.text.trim();
       final sedeId = await SupabaseConfig.getSedePrincipalId();
 
-      final List<Map<String, dynamic>> itemsPayload = _carrito.values.map((it) {
-        final ProductoBarra p = it['producto'] as ProductoBarra;
-        final double cant = (it['cantidad'] as num).toDouble();
-        return {
-          'producto_barra_id': p.id,
-          'cantidad': cant,
-          'precio_unitario': p.precioVenta,
-        };
-      }).toList();
+      final List<Map<String, dynamic>> itemsPayload = [];
+      final List<TicketItemData> itemsTicket = [];
 
-      final List<TicketItemData> itemsTicket = _carrito.values.map((it) {
+      for (final it in _carrito.values) {
         final ProductoBarra p = it['producto'] as ProductoBarra;
         final double cant = (it['cantidad'] as num).toDouble();
-        return TicketItemData(
-          cantidad: cant,
-          nombreProducto: p.nombre,
-          precioUnitario: p.precioVenta,
+        final double precio =
+            (it['precio_unitario'] as num?)?.toDouble() ?? p.precioVenta;
+        final String nombre = it['nombre_personalizado'] as String? ?? p.nombre;
+
+        // Si es una Promo 2x1 de cócteles con 2 cócteles para descuento de escandallo:
+        final ProductoBarra? c1 = it['coctel1'] as ProductoBarra?;
+        final ProductoBarra? c2 = it['coctel2'] as ProductoBarra?;
+        if (c1 != null && c2 != null) {
+          itemsPayload.add({
+            'producto_barra_id': c1.id,
+            'nombre_producto': 'Promo 2x1: ${c1.nombre}',
+            'cantidad': cant,
+            'precio_unitario': precio,
+          });
+          itemsPayload.add({
+            'producto_barra_id': c2.id,
+            'nombre_producto': 'Promo 2x1: ${c2.nombre} (Gratis)',
+            'cantidad': cant,
+            'precio_unitario': 0.00,
+          });
+        } else {
+          itemsPayload.add({
+            'producto_barra_id': p.id,
+            'nombre_producto': nombre,
+            'cantidad': cant,
+            'precio_unitario': precio,
+          });
+        }
+
+        itemsTicket.add(
+          TicketItemData(
+            cantidad: cant,
+            nombreProducto: nombre,
+            precioUnitario: precio,
+          ),
         );
-      }).toList();
+      }
 
       final resultado = await _service.despacharRonda(
         comandaId: _comandaAbiertaSeleccionada?.id,
@@ -570,11 +1149,6 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
               _cargarMesasAbiertas();
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.person_add_alt_1),
-            tooltip: 'Iniciar nueva cuenta',
-            onPressed: _iniciarNuevaCuenta,
-          ),
         ],
       ),
       body: LayoutBuilder(
@@ -788,33 +1362,65 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
             ),
           ),
 
-          // 4. SELECTOR DE CATEGORÍA
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          // 4. FILTRO DE CATEGORÍA
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppTheme.primaryAmber.withValues(alpha: 0.35),
+              ),
+            ),
             child: Row(
-              children: _categorias.map((cat) {
-                final isSelected = _categoriaSeleccionada == cat;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(cat),
-                    selected: isSelected,
-                    selectedColor: AppTheme.primaryAmber,
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? AppTheme.background
-                          : AppTheme.textSecondary,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontSize: 12,
-                    ),
-                    onSelected: (val) {
-                      if (val) setState(() => _categoriaSeleccionada = cat);
-                    },
+              children: [
+                const Icon(
+                  Icons.filter_alt_outlined,
+                  color: AppTheme.primaryAmber,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Categoría:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryAmber,
                   ),
-                );
-              }).toList(),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _categoriaSeleccionada,
+                      isExpanded: true,
+                      dropdownColor: AppTheme.surface,
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppTheme.primaryAmber,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                      items: _categorias.map((cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat,
+                          child: Text(
+                            cat == 'Todas' ? 'Todas las categorías' : cat,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _categoriaSeleccionada = val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 14),
@@ -849,8 +1455,15 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
               itemCount: productos.length,
               itemBuilder: (context, index) {
                 final p = productos[index];
-                final cantEnCarrito =
-                    _carrito[p.id]?['cantidad'] as double? ?? 0.0;
+                final cantEnCarrito = _carrito.values
+                    .where(
+                      (item) => (item['producto'] as ProductoBarra).id == p.id,
+                    )
+                    .fold(
+                      0.0,
+                      (acc, item) =>
+                          acc + ((item['cantidad'] as num).toDouble()),
+                    );
 
                 return InkWell(
                   onTap: () => _agregarOIncrementar(p),
@@ -913,20 +1526,38 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '\$${p.precioVenta.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 13,
+                              p.nombre.toLowerCase().contains('promo coctel')
+                                  ? 'PROMO 2x1'
+                                  : '\$${p.precioVenta.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize:
+                                    p.nombre.toLowerCase().contains(
+                                      'promo coctel',
+                                    )
+                                    ? 11
+                                    : 13,
                                 fontWeight: FontWeight.w800,
                                 color: AppTheme.primaryAmber,
                               ),
                             ),
                             Text(
-                              p.esReceta ? 'PREPARADO' : 'DIRECTO',
+                              p.nombre.toLowerCase().contains('promo coctel')
+                                  ? 'MAYOR VALOR'
+                                  : (p.nombre.toLowerCase().contains(
+                                          'promo balde',
+                                        )
+                                        ? '12 CERVEZAS'
+                                        : (p.esReceta
+                                              ? 'PREPARADO'
+                                              : 'DIRECTO')),
                               style: TextStyle(
-                                fontSize: 9,
-                                color: p.esReceta
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: (p.nombre.toLowerCase().contains('promo')
                                     ? AppTheme.secondaryCyan
-                                    : AppTheme.textMuted,
+                                    : (p.esReceta
+                                          ? AppTheme.secondaryCyan
+                                          : AppTheme.textMuted)),
                               ),
                             ),
                           ],
@@ -1093,11 +1724,18 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                     itemCount: _carrito.length,
                     separatorBuilder: (_, _) => const Divider(height: 8),
                     itemBuilder: (context, index) {
-                      final item = _carrito.values.elementAt(index);
+                      final key = _carrito.keys.elementAt(index);
+                      final item = _carrito[key]!;
                       final ProductoBarra prod =
                           item['producto'] as ProductoBarra;
                       final double cant = (item['cantidad'] as num).toDouble();
-                      final subtotal = cant * prod.precioVenta;
+                      final String nombre =
+                          item['nombre_personalizado'] as String? ??
+                          prod.nombre;
+                      final double precio =
+                          (item['precio_unitario'] as num?)?.toDouble() ??
+                          prod.precioVenta;
+                      final subtotal = cant * precio;
 
                       return Row(
                         children: [
@@ -1106,14 +1744,14 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  prod.nombre,
+                                  nombre,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
                                 ),
                                 Text(
-                                  '\$${prod.precioVenta.toStringAsFixed(2)} c/u',
+                                  '\$${precio.toStringAsFixed(2)} c/u',
                                   style: const TextStyle(
                                     color: AppTheme.textMuted,
                                     fontSize: 11,
@@ -1130,7 +1768,7 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                                   size: 20,
                                 ),
                                 color: AppTheme.errorCoral,
-                                onPressed: () => _decrementar(prod.id),
+                                onPressed: () => _decrementar(key),
                               ),
                               Text(
                                 cant.toStringAsFixed(0),
@@ -1145,7 +1783,7 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                                   size: 20,
                                 ),
                                 color: AppTheme.successMint,
-                                onPressed: () => _agregarOIncrementar(prod),
+                                onPressed: () => _incrementar(key),
                               ),
                             ],
                           ),

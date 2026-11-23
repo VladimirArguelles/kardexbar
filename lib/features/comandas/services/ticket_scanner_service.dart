@@ -18,9 +18,9 @@ class TicketScannerService {
     try {
       return await _picker.pickImage(
         source: ImageSource.camera,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 70,
       );
     } catch (e) {
       debugPrint('Error al capturar foto desde cámara: $e');
@@ -33,9 +33,9 @@ class TicketScannerService {
     try {
       return await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 70,
       );
     } catch (e) {
       debugPrint('Error al seleccionar imagen desde galería: $e');

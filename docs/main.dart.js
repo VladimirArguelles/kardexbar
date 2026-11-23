@@ -104908,7 +104908,7 @@ E4(){var s=0,r=B.t(t.Vv),q,p=2,o=[],n=this,m,l,k,j
 var $async$E4=B.u(function(a,b){if(a===1){o.push(b)
 s=p}for(;;)switch(s){case 0:p=4
 s=7
-return B.o(n.b.a5N(85,1920,1920,A.mD),$async$E4)
+return B.o(n.b.a5N(70,1024,1024,A.mD),$async$E4)
 case 7:l=b
 q=l
 s=1
@@ -104932,7 +104932,7 @@ AC(){var s=0,r=B.t(t.Vv),q,p=2,o=[],n=this,m,l,k,j
 var $async$AC=B.u(function(a,b){if(a===1){o.push(b)
 s=p}for(;;)switch(s){case 0:p=4
 s=7
-return B.o(n.b.a5N(85,1920,1920,A.Aq),$async$AC)
+return B.o(n.b.a5N(70,1024,1024,A.Aq),$async$AC)
 case 7:l=b
 q=l
 s=1

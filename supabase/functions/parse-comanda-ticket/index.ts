@@ -267,66 +267,89 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
       'gemini-3.8-flash',
       'gemini-3.8-flash-lite',
       'gemini-flash-latest',
+      'gemini-3.0-flash',
     ];
+    const maxPasses = 2;
     let geminiResponse: Response | null = null;
     let lastErrorText = '';
     let lastStatusCode = 500;
+    let successfulModel = '';
 
-    for (let i = 0; i < modelsToTry.length; i++) {
-      const model = modelsToTry[i];
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+    modelLoop: for (let pass = 1; pass <= maxPasses; pass++) {
+      for (let i = 0; i < modelsToTry.length; i++) {
+        const model = modelsToTry[i];
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
 
-      try {
-        const res = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(geminiPayload),
-        });
+        try {
+          const res = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(geminiPayload),
+          });
 
-        if (res.ok) {
-          geminiResponse = res;
-          console.log(`Petición exitosa a Gemini Vision con modelo: ${model}`);
-          break;
-        }
+          if (res.ok) {
+            geminiResponse = res;
+            successfulModel = model;
+            console.log(
+              `[parse-comanda-ticket] Petición exitosa a Gemini Vision con modelo: ${model} (en pasada ${pass}/${maxPasses})`
+            );
+            break modelLoop;
+          }
 
-        lastStatusCode = res.status;
-        lastErrorText = await res.text();
-        console.warn(
-          `Intento con modelo ${model} falló con status ${res.status}:`,
-          lastErrorText
-        );
-
-        // Si es 404, 429, 500, 503 o indica saturación/modelo no disponible, intentar con el siguiente modelo de fallback
-        const shouldRetry =
-          res.status === 404 ||
-          res.status === 429 ||
-          res.status === 500 ||
-          res.status === 503 ||
-          lastErrorText.includes('is no longer available') ||
-          lastErrorText.includes('not found') ||
-          lastErrorText.includes('Resource has been exhausted') ||
-          lastErrorText.includes('Overloaded') ||
-          lastErrorText.includes('Internal error');
-
-        if (shouldRetry && i < modelsToTry.length - 1) {
-          console.log(
-            `Esperando 600ms antes de reintentar con el siguiente modelo (intento ${i + 1}/${modelsToTry.length})...`
+          lastStatusCode = res.status;
+          lastErrorText = await res.text();
+          console.warn(
+            `[parse-comanda-ticket] Intento con modelo ${model} (pasada ${pass}) falló con status ${res.status}:`,
+            lastErrorText
           );
-          await new Promise((resolve) => setTimeout(resolve, 600));
-          continue;
-        }
 
-        // Si es otro error (ej. clave de API inválida 400) o no quedan más modelos, romper el bucle
-        break;
-      } catch (fetchErr) {
-        console.error(`Error de red al consultar ${model}:`, fetchErr);
-        lastErrorText =
-          fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          // Si es 404, 429, 500, 503 o indica saturación/modelo no disponible, reintentar con el siguiente
+          const shouldRetry =
+            res.status === 404 ||
+            res.status === 429 ||
+            res.status === 500 ||
+            res.status === 503 ||
+            lastErrorText.includes('is no longer available') ||
+            lastErrorText.includes('not found') ||
+            lastErrorText.includes('Resource has been exhausted') ||
+            lastErrorText.includes('Overloaded') ||
+            lastErrorText.includes('Internal error') ||
+            lastErrorText.includes('high demand');
 
-        if (i < modelsToTry.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 600));
+          if (shouldRetry) {
+            const isLastAttempt =
+              pass === maxPasses && i === modelsToTry.length - 1;
+            if (!isLastAttempt) {
+              console.log(
+                `[parse-comanda-ticket] Esperando 1200ms antes del siguiente reintento...`
+              );
+              await new Promise((resolve) => setTimeout(resolve, 1200));
+              continue;
+            }
+          }
+
+          // Si es error 400 definitivo que no sea por modelo no disponible, no reintentar
+          if (
+            res.status === 400 &&
+            !lastErrorText.includes('is no longer available')
+          ) {
+            break modelLoop;
+          }
+        } catch (fetchErr) {
+          console.error(
+            `[parse-comanda-ticket] Error de red al consultar ${model}:`,
+            fetchErr
+          );
+          lastErrorText =
+            fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+
+          const isLastAttempt =
+            pass === maxPasses && i === modelsToTry.length - 1;
+          if (!isLastAttempt) {
+            await new Promise((resolve) => setTimeout(resolve, 1200));
+          }
         }
       }
     }

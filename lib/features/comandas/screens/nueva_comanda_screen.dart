@@ -263,18 +263,60 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
         _meseroController.text = resultado.mesero!;
       }
 
-      // 3. Documentar folio / número de ticket físico en notas
-      if (resultado.numeroTicket != null &&
-          resultado.numeroTicket!.isNotEmpty) {
-        final tagTicket = '[Ticket Físico: ${resultado.numeroTicket}]';
-        if (!_notasController.text.contains(tagTicket)) {
-          if (_notasController.text.trim().isEmpty) {
-            _notasController.text = tagTicket;
-          } else {
-            _notasController.text =
-                '${_notasController.text.trim()} $tagTicket';
+      // 3. Documentar folio / número de ticket físico y productos identificados en notas
+      final listaProductosNotas = <String>[];
+      final itemsParaNotas = resultado.todosLosItems.isNotEmpty
+          ? resultado.todosLosItems
+          : resultado.items;
+
+      for (final item in itemsParaNotas) {
+        final cant = item.cantidad % 1 == 0
+            ? item.cantidad.toInt().toString()
+            : item.cantidad.toString();
+        final nombre = item.productoSugerido?.nombre ?? item.nombreDetectado;
+
+        if (item.nombreDetectado.contains('>>')) {
+          final mod = item.nombreDetectado
+              .split('>>')
+              .sublist(1)
+              .join('>>')
+              .trim();
+          if (mod.isNotEmpty &&
+              !nombre.toLowerCase().contains(mod.toLowerCase())) {
+            listaProductosNotas.add('${cant}X $nombre >> $mod');
+            continue;
           }
         }
+        listaProductosNotas.add('${cant}X $nombre');
+      }
+
+      final textoProductos = listaProductosNotas.join(', ');
+      final tieneFolio =
+          resultado.numeroTicket != null &&
+          resultado.numeroTicket!.trim().isNotEmpty;
+      final tagTicket = tieneFolio
+          ? '[Ticket Físico: ${resultado.numeroTicket!.trim()}]'
+          : '[Ticket Físico]';
+
+      final textoNotaTicket = textoProductos.isNotEmpty
+          ? '$tagTicket $textoProductos'
+          : tagTicket;
+
+      if (_notasController.text.trim().isEmpty) {
+        _notasController.text = textoNotaTicket;
+      } else if (textoProductos.isNotEmpty &&
+          !_notasController.text.contains(textoProductos)) {
+        if (tieneFolio && _notasController.text.contains(tagTicket)) {
+          _notasController.text = _notasController.text.replaceAll(
+            tagTicket,
+            textoNotaTicket,
+          );
+        } else {
+          _notasController.text =
+              '${_notasController.text.trim()} | $textoNotaTicket';
+        }
+      } else if (!_notasController.text.contains(tagTicket)) {
+        _notasController.text = '${_notasController.text.trim()} $tagTicket';
       }
 
       // 4. Agregar productos vinculados al carrito de la ronda actual
@@ -1428,6 +1470,8 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _notasController,
+                    maxLines: null,
+                    minLines: 1,
                     decoration: const InputDecoration(
                       labelText: 'Coordinación con otras áreas / Notas',
                       hintText: 'Ej. 2X PIZZA TRADICIONAL >> Para llevar',

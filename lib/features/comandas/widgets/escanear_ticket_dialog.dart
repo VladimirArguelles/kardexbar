@@ -13,13 +13,15 @@ class EscaneoTicketConfirmado {
   final String? cliente;
   final String? mesero;
   final List<ItemTicketEscaneado> items;
+  final List<ItemTicketEscaneado> todosLosItems;
 
   EscaneoTicketConfirmado({
     this.numeroTicket,
     this.cliente,
     this.mesero,
     required this.items,
-  });
+    List<ItemTicketEscaneado>? todosLosItems,
+  }) : todosLosItems = todosLosItems ?? items;
 }
 
 /// Diálogo interactivo táctil para escanear tickets físicos y revisar las sugerencias de la IA
@@ -146,11 +148,11 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
         .where((i) => i.estaVinculado)
         .toList();
 
-    if (itemsValidos.isEmpty) {
+    if (_itemsDetectados.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'No hay productos vinculados al catálogo para agregar a la comanda.',
+            'No hay productos detectados en la comanda para aplicar.',
           ),
           backgroundColor: AppTheme.errorCoral,
         ),
@@ -169,6 +171,7 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
           ? _meseroController.text.trim()
           : null,
       items: itemsValidos,
+      todosLosItems: List.from(_itemsDetectados),
     );
 
     Navigator.of(context).pop(resultado);
@@ -278,7 +281,9 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                       ElevatedButton.icon(
                         icon: const Icon(Icons.check_circle_outline, size: 20),
                         label: Text(
-                          'Agregar ${_itemsDetectados.where((i) => i.estaVinculado).length} Productos a Ronda',
+                          _itemsDetectados.any((i) => i.estaVinculado)
+                              ? 'Agregar ${_itemsDetectados.where((i) => i.estaVinculado).length} Productos a Ronda'
+                              : 'Aplicar ${_itemsDetectados.length} Productos a Notas',
                         ),
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(

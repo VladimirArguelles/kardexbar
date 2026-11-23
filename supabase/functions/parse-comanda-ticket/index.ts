@@ -240,9 +240,7 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
   ]
 }`;
 
-    // 6. Consultar Google Gemini Vision API (gemini-2.5-flash)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-
+    // 6. Consultar Google Gemini Vision API (gemini-3.8-flash con fallback a gemini-flash-latest)
     const geminiPayload = {
       contents: [
         {
@@ -265,23 +263,61 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
       },
     };
 
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(geminiPayload),
-    });
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-flash-latest'];
+    let geminiResponse: Response | null = null;
+    let lastErrorText = '';
+    let lastStatusCode = 500;
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error(
-        `Gemini Vision API error (${geminiResponse.status}):`,
-        errorText
-      );
-      let parsedError = errorText;
+    for (const model of modelsToTry) {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+
       try {
-        const errJson = JSON.parse(errorText);
+        const res = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(geminiPayload),
+        });
+
+        if (res.ok) {
+          geminiResponse = res;
+          console.log(`Petición exitosa a Gemini Vision con modelo: ${model}`);
+          break;
+        }
+
+        lastStatusCode = res.status;
+        lastErrorText = await res.text();
+        console.warn(
+          `Intento con modelo ${model} falló con status ${res.status}:`,
+          lastErrorText
+        );
+
+        // Si es 404, 429, 503 o indica modelo no disponible/no encontrado, intentar con el siguiente modelo de fallback
+        if (
+          res.status === 404 ||
+          res.status === 429 ||
+          res.status === 503 ||
+          lastErrorText.includes('is no longer available') ||
+          lastErrorText.includes('not found') ||
+          lastErrorText.includes('Resource has been exhausted')
+        ) {
+          continue;
+        }
+
+        // Si es otro error (ej. clave de API inválida 400), no reintentar
+        break;
+      } catch (fetchErr) {
+        console.error(`Error de red al consultar ${model}:`, fetchErr);
+        lastErrorText =
+          fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+      }
+    }
+
+    if (!geminiResponse) {
+      let parsedError = lastErrorText;
+      try {
+        const errJson = JSON.parse(lastErrorText);
         if (errJson.error?.message) {
           parsedError = errJson.error.message;
         }
@@ -289,12 +325,12 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
 
       return new Response(
         JSON.stringify({
-          error: `Error Gemini Vision API (${geminiResponse.status}): ${parsedError}`,
-          details: errorText,
+          error: `Error Gemini Vision API (${lastStatusCode}): ${parsedError}`,
+          details: lastErrorText,
         }),
         {
           status:
-            geminiResponse.status >= 400 && geminiResponse.status < 500
+            lastStatusCode >= 400 && lastStatusCode < 500
               ? 400
               : 502,
           headers: {

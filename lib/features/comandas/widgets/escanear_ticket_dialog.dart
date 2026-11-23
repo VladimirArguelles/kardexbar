@@ -287,139 +287,142 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
 
   /// Vista inicial: Selección de origen (Cámara o Galería)
   Widget _buildVistaSeleccionarOrigen() {
-    return Center(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.camera_enhance_outlined,
-              size: 64,
-              color: AppTheme.primaryAmber,
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.camera_enhance_outlined,
+            size: _mensajeError != null ? 48 : 60,
+            color: AppTheme.primaryAmber,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Selecciona el método de captura de la comanda',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Selecciona el método de captura de la comanda',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-              ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Asegúrate de que el ticket físico tenga buena iluminación y los textos de barra o números sean legibles.',
+              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text(
-                'Asegúrate de que el ticket físico tenga buena iluminación y los textos de barra o números sean legibles.',
-                style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
-                textAlign: TextAlign.center,
+          ),
+          SizedBox(height: _mensajeError != null ? 14 : 22),
+          if (_mensajeError != null) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.errorCoral.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.errorCoral),
               ),
-            ),
-            const SizedBox(height: 28),
-            if (_mensajeError != null) ...[
-              Container(
-                margin: const EdgeInsets.only(bottom: 20),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.errorCoral.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.errorCoral),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: AppTheme.errorCoral,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _mensajeError!,
-                        style: const TextStyle(
-                          color: AppTheme.errorCoral,
-                          fontSize: 13,
-                        ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: AppTheme.errorCoral,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _mensajeError!,
+                      style: const TextStyle(
+                        color: AppTheme.errorCoral,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+          Wrap(
+            spacing: 14,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: [
+              SizedBox(
+                width: 200,
+                height: 80,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.surfaceVariant,
+                    foregroundColor: AppTheme.primaryAmber,
+                    side: const BorderSide(
+                      color: AppTheme.primaryAmber,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => _capturarCon(ImageSource.camera),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.camera_alt, size: 28),
+                      SizedBox(height: 4),
+                      Text(
+                        'Tomar Foto (Cámara)',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 200,
+                height: 80,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.surfaceVariant,
+                    foregroundColor: AppTheme.secondaryCyan,
+                    side: const BorderSide(
+                      color: AppTheme.secondaryCyan,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => _capturarCon(ImageSource.gallery),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.photo_library, size: 28),
+                      SizedBox(height: 4),
+                      Text(
+                        'Galería o Archivo',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
-            Wrap(
-              spacing: 16,
-              runSpacing: 14,
-              alignment: WrapAlignment.center,
-              children: [
-                SizedBox(
-                  width: 210,
-                  height: 90,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.surfaceVariant,
-                      foregroundColor: AppTheme.primaryAmber,
-                      side: const BorderSide(
-                        color: AppTheme.primaryAmber,
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _capturarCon(ImageSource.camera),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.camera_alt, size: 30),
-                        SizedBox(height: 6),
-                        Text(
-                          'Tomar Foto (Cámara)',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 210,
-                  height: 90,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.surfaceVariant,
-                      foregroundColor: AppTheme.secondaryCyan,
-                      side: const BorderSide(
-                        color: AppTheme.secondaryCyan,
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _capturarCon(ImageSource.gallery),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.photo_library, size: 30),
-                        SizedBox(height: 6),
-                        Text(
-                          'Galería o Archivo',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }

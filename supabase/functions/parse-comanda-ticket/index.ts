@@ -240,7 +240,7 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
   ]
 }`;
 
-    // 6. Consultar Google Gemini Vision API (gemini-3.8-flash con fallback a gemini-flash-latest)
+    // 6. Consultar Google Gemini Vision API con bucle de modelos y tolerancia a fallos
     const geminiPayload = {
       contents: [
         {
@@ -263,12 +263,17 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
       },
     };
 
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-flash-latest'];
+    const modelsToTry = [
+      'gemini-3.8-flash',
+      'gemini-3.8-flash-lite',
+      'gemini-flash-latest',
+    ];
     let geminiResponse: Response | null = null;
     let lastErrorText = '';
     let lastStatusCode = 500;
 
-    for (const model of modelsToTry) {
+    for (let i = 0; i < modelsToTry.length; i++) {
+      const model = modelsToTry[i];
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
 
       try {
@@ -293,24 +298,36 @@ Debes responder ESTRICTAMENTE con un objeto JSON válido con la siguiente estruc
           lastErrorText
         );
 
-        // Si es 404, 429, 503 o indica modelo no disponible/no encontrado, intentar con el siguiente modelo de fallback
-        if (
+        // Si es 404, 429, 500, 503 o indica saturación/modelo no disponible, intentar con el siguiente modelo de fallback
+        const shouldRetry =
           res.status === 404 ||
           res.status === 429 ||
+          res.status === 500 ||
           res.status === 503 ||
           lastErrorText.includes('is no longer available') ||
           lastErrorText.includes('not found') ||
-          lastErrorText.includes('Resource has been exhausted')
-        ) {
+          lastErrorText.includes('Resource has been exhausted') ||
+          lastErrorText.includes('Overloaded') ||
+          lastErrorText.includes('Internal error');
+
+        if (shouldRetry && i < modelsToTry.length - 1) {
+          console.log(
+            `Esperando 600ms antes de reintentar con el siguiente modelo (intento ${i + 1}/${modelsToTry.length})...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 600));
           continue;
         }
 
-        // Si es otro error (ej. clave de API inválida 400), no reintentar
+        // Si es otro error (ej. clave de API inválida 400) o no quedan más modelos, romper el bucle
         break;
       } catch (fetchErr) {
         console.error(`Error de red al consultar ${model}:`, fetchErr);
         lastErrorText =
           fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+
+        if (i < modelsToTry.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+        }
       }
     }
 

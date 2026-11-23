@@ -187,15 +187,15 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
       ),
       insetPadding: EdgeInsets.symmetric(
         horizontal: esPantallaPequena ? 12 : 32,
-        vertical: 24,
+        vertical: esPantallaPequena ? 12 : 24,
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 720,
-          maxHeight: size.height * 0.9,
+          maxHeight: size.height * (esPantallaPequena ? 0.95 : 0.9),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: EdgeInsets.all(esPantallaPequena ? 14.0 : 20.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -204,35 +204,35 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(esPantallaPequena ? 8 : 10),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryAmber.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.document_scanner,
                       color: AppTheme.primaryAmber,
-                      size: 26,
+                      size: esPantallaPequena ? 22 : 26,
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  const Expanded(
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Escanear Comanda / Ticket',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: esPantallaPequena ? 16 : 18,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           'Digitalización automática con visión artificial y Gemini',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: AppTheme.textMuted,
                           ),
                         ),
@@ -245,18 +245,18 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                   ),
                 ],
               ),
-              const Divider(height: 24),
+              Divider(height: esPantallaPequena ? 16 : 24),
 
               // Cuerpo según estado
               Expanded(
                 child: _procesando
                     ? _buildVistaProcesando()
                     : (_imageBytes == null || _mensajeError != null)
-                    ? _buildVistaSeleccionarOrigen()
+                    ? _buildVistaSeleccionarOrigen(esPantallaPequena)
                     : _buildVistaRevision(),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Botones de acción inferiores
               if (!_procesando)
@@ -264,6 +264,12 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: esPantallaPequena ? 12 : 16,
+                          vertical: esPantallaPequena ? 8 : 12,
+                        ),
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancelar'),
                     ),
@@ -273,6 +279,12 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                         icon: const Icon(Icons.check_circle_outline, size: 20),
                         label: Text(
                           'Agregar ${_itemsDetectados.where((i) => i.estaVinculado).length} Productos a Ronda',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: esPantallaPequena ? 12 : 16,
+                            vertical: esPantallaPequena ? 8 : 12,
+                          ),
                         ),
                         onPressed: _confirmarYAplicar,
                       ),
@@ -286,43 +298,50 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
   }
 
   /// Vista inicial: Selección de origen (Cámara o Galería)
-  Widget _buildVistaSeleccionarOrigen() {
+  Widget _buildVistaSeleccionarOrigen(bool esPantallaPequena) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: esPantallaPequena ? 4 : 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.camera_enhance_outlined,
-            size: _mensajeError != null ? 48 : 60,
+            size: _mensajeError != null ? 36 : (esPantallaPequena ? 44 : 56),
             color: AppTheme.primaryAmber,
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: esPantallaPequena ? 8 : 12),
+          Text(
             'Selecciona el método de captura de la comanda',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: esPantallaPequena ? 14 : 15,
               fontWeight: FontWeight.bold,
               color: AppTheme.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
+          const SizedBox(height: 4),
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: esPantallaPequena ? 8.0 : 16.0,
+            ),
             child: Text(
               'Asegúrate de que el ticket físico tenga buena iluminación y los textos de barra o números sean legibles.',
-              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              style: TextStyle(
+                fontSize: esPantallaPequena ? 11 : 12,
+                color: AppTheme.textMuted,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: _mensajeError != null ? 14 : 22),
+          SizedBox(
+            height: _mensajeError != null ? 10 : (esPantallaPequena ? 12 : 20),
+          ),
           if (_mensajeError != null) ...[
             Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: AppTheme.errorCoral.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
@@ -333,15 +352,15 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                   const Icon(
                     Icons.error_outline,
                     color: AppTheme.errorCoral,
-                    size: 20,
+                    size: 18,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _mensajeError!,
                       style: const TextStyle(
                         color: AppTheme.errorCoral,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -351,13 +370,13 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
             ),
           ],
           Wrap(
-            spacing: 14,
-            runSpacing: 12,
+            spacing: 12,
+            runSpacing: 10,
             alignment: WrapAlignment.center,
             children: [
               SizedBox(
-                width: 200,
-                height: 80,
+                width: esPantallaPequena ? double.infinity : 200,
+                height: esPantallaPequena ? 50 : 64,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.surfaceVariant,
@@ -367,16 +386,20 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                       width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
                   ),
                   onPressed: () => _capturarCon(ImageSource.camera),
-                  child: const Column(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt, size: 28),
-                      SizedBox(height: 4),
-                      Text(
+                      Icon(Icons.camera_alt, size: esPantallaPequena ? 22 : 24),
+                      const SizedBox(width: 8),
+                      const Text(
                         'Tomar Foto (Cámara)',
                         style: TextStyle(
                           fontSize: 13,
@@ -388,8 +411,8 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                 ),
               ),
               SizedBox(
-                width: 200,
-                height: 80,
+                width: esPantallaPequena ? double.infinity : 200,
+                height: esPantallaPequena ? 50 : 64,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.surfaceVariant,
@@ -399,16 +422,23 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
                       width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
                   ),
                   onPressed: () => _capturarCon(ImageSource.gallery),
-                  child: const Column(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.photo_library, size: 28),
-                      SizedBox(height: 4),
-                      Text(
+                      Icon(
+                        Icons.photo_library,
+                        size: esPantallaPequena ? 22 : 24,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
                         'Galería o Archivo',
                         style: TextStyle(
                           fontSize: 13,
@@ -421,7 +451,7 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -430,36 +460,39 @@ class _EscanearTicketDialogState extends State<EscanearTicketDialog> {
   /// Vista mientras la Edge Function procesa con Gemini Vision
   Widget _buildVistaProcesando() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (_imageBytes != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                width: 120,
-                height: 120,
-                child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_imageBytes != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                ),
+              ),
+            const SizedBox(height: 18),
+            const CircularProgressIndicator(color: AppTheme.primaryAmber),
+            const SizedBox(height: 16),
+            const Text(
+              'Analizando comanda física...',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
               ),
             ),
-          const SizedBox(height: 24),
-          const CircularProgressIndicator(color: AppTheme.primaryAmber),
-          const SizedBox(height: 20),
-          const Text(
-            'Analizando comanda física...',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+            const SizedBox(height: 6),
+            const Text(
+              'Gemini Vision está interpretando abreviaturas de barra y cruzando productos con el catálogo',
+              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Gemini Vision está interpretando abreviaturas de barra y cruzando productos con el catálogo',
-            style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

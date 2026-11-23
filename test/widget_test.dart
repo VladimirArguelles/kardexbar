@@ -10,11 +10,7 @@ void main() {
   });
 
   testWidgets('BootScreen renders KardexBar-Logo', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: BootScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: BootScreen()));
 
     expect(find.byType(BootScreen), findsOneWidget);
     expect(find.text('KARDEXBAR'), findsOneWidget);

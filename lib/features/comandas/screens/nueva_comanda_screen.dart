@@ -6,6 +6,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/comanda_model.dart';
 import '../services/comandas_service.dart';
+import '../widgets/escanear_ticket_dialog.dart';
 import '../widgets/mesas_abiertas_widget.dart';
 
 /// Pantalla táctil de gestión de comandas de barra:
@@ -226,6 +227,88 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
           _carrito.remove(key);
         }
       }
+    });
+  }
+
+  /// Abre el diálogo interactivo para escanear una comanda/ticket físico con cámara o galería
+  Future<void> _abrirDialogoEscanearTicket() async {
+    if (_productos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El catálogo de productos aún se está cargando...'),
+          backgroundColor: AppTheme.warningAmber,
+        ),
+      );
+      return;
+    }
+
+    final resultado = await EscanearTicketDialog.mostrar(
+      context,
+      catalogo: _productos,
+    );
+
+    if (resultado == null || !mounted) return;
+
+    setState(() {
+      // 1. Asignar cliente si fue detectado y el campo está vacío o es por defecto
+      if (resultado.cliente != null && resultado.cliente!.isNotEmpty) {
+        if (_clienteController.text.trim().isEmpty ||
+            _clienteController.text.trim().toLowerCase() == 'cliente barra') {
+          _clienteController.text = resultado.cliente!;
+        }
+      }
+
+      // 2. Asignar mesero si fue detectado
+      if (resultado.mesero != null && resultado.mesero!.isNotEmpty) {
+        _meseroController.text = resultado.mesero!;
+      }
+
+      // 3. Documentar folio / número de ticket físico en notas
+      if (resultado.numeroTicket != null &&
+          resultado.numeroTicket!.isNotEmpty) {
+        final tagTicket = '[Ticket Físico: ${resultado.numeroTicket}]';
+        if (!_notasController.text.contains(tagTicket)) {
+          if (_notasController.text.trim().isEmpty) {
+            _notasController.text = tagTicket;
+          } else {
+            _notasController.text =
+                '${_notasController.text.trim()} $tagTicket';
+          }
+        }
+      }
+
+      // 4. Agregar productos vinculados al carrito de la ronda actual
+      int agregados = 0;
+      for (final item in resultado.items) {
+        final prod = item.productoSugerido;
+        if (prod == null) continue;
+
+        final key = prod.id;
+        final cant = item.cantidad;
+
+        if (_carrito.containsKey(key)) {
+          final cantActual = (_carrito[key]!['cantidad'] as num).toDouble();
+          _carrito[key]!['cantidad'] = cantActual + cant;
+        } else {
+          _carrito[key] = {
+            'producto': prod,
+            'cantidad': cant,
+            'precio_unitario': prod.precioVenta,
+            'nombre_personalizado': prod.nombre,
+          };
+        }
+        agregados++;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$agregados productos importados del ticket a la ronda actual',
+          ),
+          backgroundColor: AppTheme.successMint,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     });
   }
 
@@ -1075,6 +1158,14 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(
+              Icons.document_scanner,
+              color: AppTheme.primaryAmber,
+            ),
+            tooltip: 'Escanear Ticket Físico con Cámara',
+            onPressed: _abrirDialogoEscanearTicket,
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Recargar catálogo y mesas',
             onPressed: () {
@@ -1225,6 +1316,63 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
+                  // Botón táctil para digitalizar comanda física
+                  InkWell(
+                    onTap: _abrirDialogoEscanearTicket,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryAmber.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppTheme.primaryAmber.withValues(alpha: 0.5),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.camera_enhance,
+                            color: AppTheme.primaryAmber,
+                            size: 20,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Escanear Ticket de Barra (Cámara / Foto)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryAmber,
+                                  ),
+                                ),
+                                Text(
+                                  'Digitaliza el ticket con IA y carga los productos automáticamente',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            color: AppTheme.primaryAmber,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   TextFormField(
                     controller: _clienteController,
                     decoration: const InputDecoration(

@@ -166,7 +166,7 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Cobrar Mesa: ${cmd.nombreCliente}',
+                  'Registrar Mesa: ${cmd.nombreCliente}',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -334,7 +334,7 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
           children: [
             // PANEL SUPERIOR: Resumen de mesas, total acumulado y botón actualizar
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: const BoxDecoration(
                 color: AppTheme.surface,
                 border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
@@ -343,8 +343,8 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 8,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceVariant,
@@ -353,17 +353,17 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                     child: Text(
                       '${_mesas.length} mesas',
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.textPrimary,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 8,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryAmber.withValues(alpha: 0.15),
@@ -375,27 +375,22 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                     child: Text(
                       '\$${_totalGeneral.toStringAsFixed(2)}',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.primaryAmber,
                       ),
                     ),
                   ),
                   const Spacer(),
-                  TextButton.icon(
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.secondaryCyan,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text(
-                      'Actualizar',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    color: AppTheme.secondaryCyan,
+                    tooltip: 'Actualizar',
+                    visualDensity: VisualDensity.compact,
                     onPressed: _cargarMesas,
                   ),
                   if (widget.onNuevaComanda != null) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryAmber,
@@ -403,7 +398,10 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 6,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       icon: const Icon(Icons.add, size: 16),
@@ -913,7 +911,7 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                 ),
                 const SizedBox(width: 8),
 
-                // Botón Cobrar / Registrar
+                // Botón Registrar (antes Cobrar)
                 Expanded(
                   flex: 4,
                   child: ElevatedButton.icon(
@@ -928,9 +926,9 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(Icons.payments_outlined, size: 16),
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
                     label: const Text(
-                      'Cobrar',
+                      'Registrar',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,

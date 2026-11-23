@@ -850,7 +850,7 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
       final rondaNumero =
           (resultado['ronda'] as num?)?.toInt() ?? _proximaRonda;
 
-      // Imprimir el ticket térmico con el formato de la imagen adjunta
+      // Datos de ticket preparados para impresión opcional bajo demanda
       final ticketData = TicketPosData(
         ordenArea: mesaNombre,
         cliente: clienteNombre,
@@ -861,8 +861,6 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
         items: itemsTicket,
         notasCoordinacion: notasComanda.isEmpty ? null : notasComanda,
       );
-
-      await TicketPosBarra.imprimirTicket(ticketData);
 
       // Recargar mesas abiertas y actualizar comanda activa
       await _cargarMesasAbiertas();
@@ -884,7 +882,7 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
             ),
             backgroundColor: AppTheme.successMint,
             action: SnackBarAction(
-              label: 'REIMPRIMIR',
+              label: 'IMPRIMIR',
               textColor: AppTheme.background,
               onPressed: () => TicketPosBarra.imprimirTicket(ticketData),
             ),

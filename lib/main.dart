@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/bartender_login_screen.dart';
 import 'features/auth/boot_screen.dart';
 import 'features/cierre_reportes/screens/cierre_turno_screen.dart';
+import 'features/comandas/models/comanda_model.dart';
 import 'features/comandas/screens/historial_comandas_screen.dart';
+import 'features/comandas/screens/mesas_abiertas_screen.dart';
 import 'features/comandas/screens/nueva_comanda_screen.dart';
 import 'features/consumo_interno/screens/consumo_interno_screen.dart';
 import 'features/hielo/screens/control_hielo_screen.dart';
@@ -44,19 +47,26 @@ class KardexBarApp extends StatelessWidget {
       home: Builder(
         builder: (context) => BootScreen(
           onFinished: () {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (loginContext) => BartenderLoginScreen(
-                  onLoginSuccess: () {
-                    Navigator.of(loginContext).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const MainBarLayoutScreen(),
-                      ),
-                    );
-                  },
+            final session = SupabaseConfig.currentSession;
+            if (session != null) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const MainBarLayoutScreen()),
+              );
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (loginContext) => BartenderLoginScreen(
+                    onLoginSuccess: () {
+                      Navigator.of(loginContext).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => const MainBarLayoutScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           },
         ),
       ),
@@ -75,6 +85,7 @@ class MainBarLayoutScreen extends StatefulWidget {
 class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
   int _currentIndex = 0;
   int _subIndexComandas = 0;
+  Comanda? _comandaParaAgregar;
 
   @override
   Widget build(BuildContext context) {
@@ -89,9 +100,12 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
           setState(() => _currentIndex = 0);
           return;
         }
-        // 2. Si está en Comandas pero en Historial, regresar a Nueva Comanda
+        // 2. Si está en Comandas pero no en Mesas Abiertas (subtab 0), regresar a Mesas Abiertas
         if (_subIndexComandas != 0) {
-          setState(() => _subIndexComandas = 0);
+          setState(() {
+            _comandaParaAgregar = null;
+            _subIndexComandas = 0;
+          });
           return;
         }
         // 3. Si ya está en la pantalla inicial de Comandas, confirmar salida de la aplicación
@@ -105,7 +119,9 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                 Text('¿Salir de KardexBar?'),
               ],
             ),
-            content: const Text('¿Desea cerrar la aplicación o salir del turno actual?'),
+            content: const Text(
+              '¿Desea cerrar la aplicación o salir del turno actual?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
@@ -149,11 +165,16 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                 const SizedBox(width: 16),
                 // Badge de Sede Principal fija en pantalla ancha
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceVariant,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: AppTheme.primaryAmber.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -184,12 +205,18 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.secondaryCyan.withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: AppTheme.secondaryCyan.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.sync_alt, size: 14, color: AppTheme.secondaryCyan),
+                    const Icon(
+                      Icons.sync_alt,
+                      size: 14,
+                      color: AppTheme.secondaryCyan,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       isWide ? 'Enlace Sede 2' : 'Sede 2',
@@ -204,7 +231,11 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+              icon: const Icon(
+                Icons.lock_outline,
+                color: AppTheme.textMuted,
+                size: 20,
+              ),
               tooltip: 'Bloquear / Salir del Turno',
               onPressed: () async {
                 final confirmar = await showDialog<bool>(
@@ -217,7 +248,9 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                         Text('Bloquear Terminal'),
                       ],
                     ),
-                    content: const Text('¿Desea bloquear la pantalla y salir al inicio de turno?'),
+                    content: const Text(
+                      '¿Desea bloquear la pantalla y salir al inicio de turno?',
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(false),
@@ -236,12 +269,18 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                 );
 
                 if (confirmar == true && context.mounted) {
+                  try {
+                    await SupabaseConfig.client.auth.signOut();
+                  } catch (_) {}
+                  if (!context.mounted) return;
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
                       builder: (loginContext) => BartenderLoginScreen(
                         onLoginSuccess: () {
                           Navigator.of(loginContext).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const MainBarLayoutScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const MainBarLayoutScreen(),
+                            ),
                           );
                         },
                       ),
@@ -256,9 +295,7 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
         body: Row(
           children: [
             if (isWide) _buildNavigationRail(),
-            Expanded(
-              child: _buildCurrentScreen(),
-            ),
+            Expanded(child: _buildCurrentScreen()),
           ],
         ),
         bottomNavigationBar: isWide ? null : _buildBottomNavigationBar(),
@@ -268,18 +305,56 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
 
   Widget _buildCurrentScreen() {
     switch (_currentIndex) {
-      case 0: // COMANDAS (Nueva Comanda o Historial)
+      case 0: // COMANDAS (Mesas Abiertas, Nueva Comanda o Historial)
         return Column(
           children: [
             _buildSubTabBar(
               selectedIndex: _subIndexComandas,
-              labels: const ['NUEVA COMANDA', 'HISTORIAL DE COMANDAS'],
-              icons: const [Icons.add_shopping_cart, Icons.receipt_long],
-              onChanged: (idx) => setState(() => _subIndexComandas = idx),
+              labels: const [
+                'MESAS ABIERTAS',
+                'NUEVA COMANDA',
+                'HISTORIAL DE COMANDAS',
+              ],
+              icons: const [
+                Icons.table_restaurant,
+                Icons.add_shopping_cart,
+                Icons.receipt_long,
+              ],
+              onChanged: (idx) {
+                setState(() {
+                  if (idx != 1) {
+                    _comandaParaAgregar = null;
+                  }
+                  _subIndexComandas = idx;
+                });
+              },
             ),
             Expanded(
               child: _subIndexComandas == 0
-                  ? const NuevaComandaScreen()
+                  ? MesasAbiertasScreen(
+                      onAgregarProductos: (cmd) {
+                        setState(() {
+                          _comandaParaAgregar = cmd;
+                          _subIndexComandas = 1;
+                        });
+                      },
+                      onNuevaComanda: () {
+                        setState(() {
+                          _comandaParaAgregar = null;
+                          _subIndexComandas = 1;
+                        });
+                      },
+                    )
+                  : _subIndexComandas == 1
+                  ? NuevaComandaScreen(
+                      comandaInicial: _comandaParaAgregar,
+                      onComandaDespachada: () {
+                        setState(() {
+                          _comandaParaAgregar = null;
+                          _subIndexComandas = 0;
+                        });
+                      },
+                    )
                   : const HistorialComandasScreen(),
             ),
           ],
@@ -322,7 +397,9 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                 avatar: Icon(
                   icons[idx],
                   size: 16,
-                  color: isSelected ? AppTheme.background : AppTheme.primaryAmber,
+                  color: isSelected
+                      ? AppTheme.background
+                      : AppTheme.primaryAmber,
                 ),
                 label: Text(labels[idx]),
                 selected: isSelected,
@@ -331,7 +408,9 @@ class _MainBarLayoutScreenState extends State<MainBarLayoutScreen> {
                 labelStyle: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? AppTheme.background : AppTheme.textPrimary,
+                  color: isSelected
+                      ? AppTheme.background
+                      : AppTheme.textPrimary,
                 ),
                 onSelected: (val) {
                   if (val) onChanged(idx);

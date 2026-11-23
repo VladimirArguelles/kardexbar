@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/export_print_widget.dart';
@@ -101,7 +102,14 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
           'En Mínimo': '$_countMinimos',
           'Agotados': '$_countAgotados',
         },
-        columnasTabla: ['Insumo', 'Unidad', 'Stock', 'Mínimo', 'Estado', 'Costo Unit'],
+        columnasTabla: [
+          'Insumo',
+          'Unidad',
+          'Stock',
+          'Mínimo',
+          'Estado',
+          'Costo Unit',
+        ],
         filasTabla: filas,
       ),
     );
@@ -130,7 +138,10 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
         children: [
           // Tarjetas KPI de Estado de Inventario
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14.0,
+              vertical: 10.0,
+            ),
             child: Row(
               children: [
                 _buildKpiCard(
@@ -167,7 +178,10 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Buscar insumo (ej. Polar, Hielo, Ron)...',
-                prefixIcon: const Icon(Icons.search, color: AppTheme.secondaryCyan),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppTheme.secondaryCyan,
+                ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, size: 18),
@@ -213,9 +227,16 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                   value: 'ENTRADA',
                   child: Row(
                     children: [
-                      Icon(Icons.add_shopping_cart, color: AppTheme.successMint, size: 20),
+                      Icon(
+                        Icons.add_shopping_cart,
+                        color: AppTheme.successMint,
+                        size: 20,
+                      ),
                       SizedBox(width: 10),
-                      Text('Entrada / Compra de Insumo', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        'Entrada / Compra de Insumo',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 ),
@@ -223,9 +244,16 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                   value: 'TRASLADO',
                   child: Row(
                     children: [
-                      Icon(Icons.swap_horiz, color: AppTheme.secondaryCyan, size: 20),
+                      Icon(
+                        Icons.swap_horiz,
+                        color: AppTheme.secondaryCyan,
+                        size: 20,
+                      ),
                       SizedBox(width: 10),
-                      Text('Traslado Inter-Sedes', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        'Traslado Inter-Sedes',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 ),
@@ -233,9 +261,16 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                   value: 'MERMA',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline, color: AppTheme.errorCoral, size: 20),
+                      Icon(
+                        Icons.delete_outline,
+                        color: AppTheme.errorCoral,
+                        size: 20,
+                      ),
                       SizedBox(width: 10),
-                      Text('Merma / Rotura de Insumo', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        'Merma / Rotura de Insumo',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 ),
@@ -246,14 +281,20 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.primaryAmber.withValues(alpha: 0.6)),
+                  border: Border.all(
+                    color: AppTheme.primaryAmber.withValues(alpha: 0.6),
+                  ),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.tune, color: AppTheme.primaryAmber, size: 18),
+                        Icon(
+                          Icons.tune,
+                          color: AppTheme.primaryAmber,
+                          size: 18,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Operaciones de Inventario',
@@ -269,10 +310,16 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                       children: [
                         Text(
                           'Seleccionar acción',
-                          style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
                         ),
                         SizedBox(width: 4),
-                        Icon(Icons.arrow_drop_down, color: AppTheme.primaryAmber),
+                        Icon(
+                          Icons.arrow_drop_down,
+                          color: AppTheme.primaryAmber,
+                        ),
                       ],
                     ),
                   ],
@@ -287,20 +334,23 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _insumosFiltrados.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No se encontraron insumos',
-                          style: TextStyle(color: AppTheme.textMuted),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                        itemCount: _insumosFiltrados.length,
-                        itemBuilder: (context, index) {
-                          final insumo = _insumosFiltrados[index];
-                          return _buildInsumoCard(insumo);
-                        },
-                      ),
+                ? const Center(
+                    child: Text(
+                      'No se encontraron insumos',
+                      style: TextStyle(color: AppTheme.textMuted),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
+                    itemCount: _insumosFiltrados.length,
+                    itemBuilder: (context, index) {
+                      final insumo = _insumosFiltrados[index];
+                      return _buildInsumoCard(insumo);
+                    },
+                  ),
           ),
         ],
       ),
@@ -389,8 +439,8 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
           color: item.isAgotado
               ? AppTheme.errorCoral.withValues(alpha: 0.6)
               : (item.isMinimo
-                  ? AppTheme.warningAmber.withValues(alpha: 0.6)
-                  : AppTheme.borderLight),
+                    ? AppTheme.warningAmber.withValues(alpha: 0.6)
+                    : AppTheme.borderLight),
           width: item.isAgotado || item.isMinimo ? 1.5 : 1.0,
         ),
       ),
@@ -430,11 +480,17 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                     children: [
                       Text(
                         'Unidad: ${item.unidadMedida}',
-                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textMuted,
+                        ),
                       ),
                       Text(
                         'Mínimo: ${item.stockMinimo.toStringAsFixed(0)}',
-                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -455,11 +511,16 @@ class _StockVivoScreenState extends State<StockVivoScreen> {
                 ),
                 const SizedBox(height: 3),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: badgeColor.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     badgeText,

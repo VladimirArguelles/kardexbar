@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/config/supabase_config.dart';
 import '../../core/theme/app_theme.dart';
 import 'login_register_screen.dart';
@@ -7,10 +8,7 @@ import 'login_register_screen.dart';
 class BartenderLoginScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
 
-  const BartenderLoginScreen({
-    super.key,
-    required this.onLoginSuccess,
-  });
+  const BartenderLoginScreen({super.key, required this.onLoginSuccess});
 
   @override
   State<BartenderLoginScreen> createState() => _BartenderLoginScreenState();
@@ -19,12 +17,25 @@ class BartenderLoginScreen extends StatefulWidget {
 class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
   String? _errorMessage;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (SupabaseConfig.currentSession != null) {
+        widget.onLoginSuccess();
+      }
+    });
+  }
+
   void _irALoginRegistro() {
+    if (SupabaseConfig.currentSession != null) {
+      widget.onLoginSuccess();
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => LoginRegisterScreen(
-          onLoginSuccess: widget.onLoginSuccess,
-        ),
+        builder: (_) =>
+            LoginRegisterScreen(onLoginSuccess: widget.onLoginSuccess),
       ),
     );
   }
@@ -36,7 +47,10 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 16.0,
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 380),
               child: Column(
@@ -73,11 +87,12 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                           return Image.asset(
                             'assets/images/KardexBar-Logo-transparent.png',
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => const Icon(
-                              Icons.local_bar_rounded,
-                              size: 40,
-                              color: AppTheme.primaryAmber,
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  Icons.local_bar_rounded,
+                                  size: 40,
+                                  color: AppTheme.primaryAmber,
+                                ),
                           );
                         },
                       ),
@@ -111,7 +126,10 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                     color: AppTheme.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(color: AppTheme.borderLight, width: 1.2),
+                      side: const BorderSide(
+                        color: AppTheme.borderLight,
+                        width: 1.2,
+                      ),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -165,7 +183,10 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
 
                           // Sede Principal Fija
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.surfaceVariant,
                               borderRadius: BorderRadius.circular(8),
@@ -173,11 +194,16 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.store, color: AppTheme.primaryAmber, size: 18),
+                                const Icon(
+                                  Icons.store,
+                                  color: AppTheme.primaryAmber,
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 8),
                                 const Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'SEDE ASIGNADA',
@@ -200,11 +226,20 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.successMint.withValues(alpha: 0.15),
+                                    color: AppTheme.successMint.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: AppTheme.successMint.withValues(alpha: 0.4)),
+                                    border: Border.all(
+                                      color: AppTheme.successMint.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                    ),
                                   ),
                                   child: const Text(
                                     'ACTIVA',
@@ -225,13 +260,18 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                               padding: const EdgeInsets.all(10),
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
-                                color: AppTheme.errorCoral.withValues(alpha: 0.15),
+                                color: AppTheme.errorCoral.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: AppTheme.errorCoral),
                               ),
                               child: Text(
                                 _errorMessage!,
-                                style: const TextStyle(color: AppTheme.errorCoral, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppTheme.errorCoral,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           ],
@@ -244,7 +284,9 @@ class _BartenderLoginScreenState extends State<BartenderLoginScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryAmber,
                                 foregroundColor: AppTheme.background,
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),

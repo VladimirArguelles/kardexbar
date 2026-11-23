@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/export_print_widget.dart';
@@ -35,8 +36,13 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
     setState(() => _isLoading = true);
     try {
       final sedeId = await SupabaseConfig.getSedePrincipalId();
-      final comandas = await _comandasService.getHistorialComandas(fecha: _fechaCierre);
-      final movs = await _inventarioService.getMovimientosKardex(sedeId: sedeId, limit: 100);
+      final comandas = await _comandasService.getHistorialComandas(
+        fecha: _fechaCierre,
+      );
+      final movs = await _inventarioService.getMovimientosKardex(
+        sedeId: sedeId,
+        limit: 100,
+      );
 
       // Filtrar movimientos del día de cierre
       final movsDia = movs.where((m) {
@@ -69,7 +75,15 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
     try {
       return DateFormat('EEEE, dd/MM/yyyy', 'es_ES').format(fecha);
     } catch (_) {
-      final dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+      final dias = [
+        'Lunes',
+        'Martes',
+        'Miércoles',
+        'Jueves',
+        'Viernes',
+        'Sábado',
+        'Domingo',
+      ];
       final diaSemana = dias[fecha.weekday - 1];
       final dia = fecha.day.toString().padLeft(2, '0');
       final mes = fecha.month.toString().padLeft(2, '0');
@@ -85,7 +99,10 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
   // 2. Consumo de trabajadores: rebaja del inventario y SÍ suma a los ingresos
   double get _totalIngresoConsumoTrabajadores => _movimientosTurno
       .where((m) => m.tipoMovimiento == 'CONSUMO_TRABAJADOR')
-      .fold(0.0, (acc, m) => acc + (m.cantidad * (m.insumoCostoUnitario ?? 1.0)));
+      .fold(
+        0.0,
+        (acc, m) => acc + (m.cantidad * (m.insumoCostoUnitario ?? 1.0)),
+      );
 
   // 3. Consumo de dueños: rebaja del inventario pero NO se suma ni se resta de los ingresos
   double get _totalUnidadesConsumoDueno => _movimientosTurno
@@ -161,15 +178,24 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
       resumenKpis: {
         'Total Recaudado': '\$${_totalRecaudado.toStringAsFixed(2)}',
         'Ventas Comandas': '\$${_totalVentasComandas.toStringAsFixed(2)}',
-        'Cobro Consumo Personal': '+\$${_totalIngresoConsumoTrabajadores.toStringAsFixed(2)}',
-        'Consumo Dueño (Cortesía)': '${_totalUnidadesConsumoDueno.toStringAsFixed(1)} unid (\$0.00)',
-        'Consumo Interno Total': '${_totalConsumoInterno.toStringAsFixed(1)} unid',
+        'Cobro Consumo Personal':
+            '+\$${_totalIngresoConsumoTrabajadores.toStringAsFixed(2)}',
+        'Consumo Dueño (Cortesía)':
+            '${_totalUnidadesConsumoDueno.toStringAsFixed(1)} unid (\$0.00)',
+        'Consumo Interno Total':
+            '${_totalConsumoInterno.toStringAsFixed(1)} unid',
         'Ítems Despachados': _totalItemsDespachados.toStringAsFixed(0),
         'Mermas Turno': '${_totalMermas.toStringAsFixed(1)} unid',
       },
-      columnasTabla: ['Producto', 'Cant Despachada', 'P. Unitario', 'Total Ventas'],
+      columnasTabla: [
+        'Producto',
+        'Cant Despachada',
+        'P. Unitario',
+        'Total Ventas',
+      ],
       filasTabla: filas,
-      notasPie: 'Cuadre generado para arqueo de caja y auditoría física de botellas.',
+      notasPie:
+          'Cuadre generado para arqueo de caja y auditoría física de botellas.',
     );
   }
 
@@ -195,7 +221,10 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                 // Selector de Fecha del Turno
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
                     child: Wrap(
                       alignment: WrapAlignment.spaceBetween,
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -205,7 +234,11 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.event_note, color: AppTheme.primaryAmber, size: 22),
+                            const Icon(
+                              Icons.event_note,
+                              color: AppTheme.primaryAmber,
+                              size: 22,
+                            ),
                             const SizedBox(width: 10),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +267,10 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             visualDensity: VisualDensity.compact,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                           ),
                           icon: const Icon(Icons.calendar_month, size: 16),
                           label: const Text('Cambiar Fecha'),
@@ -266,7 +302,10 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.primaryAmber, width: 2),
+                          border: Border.all(
+                            color: AppTheme.primaryAmber,
+                            width: 2,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,7 +331,10 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'Ventas: \$${_totalVentasComandas.toStringAsFixed(2)} | Cobro pers: +\$${_totalIngresoConsumoTrabajadores.toStringAsFixed(2)}',
-                              style: const TextStyle(fontSize: 10, color: AppTheme.secondaryCyan),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.secondaryCyan,
+                              ),
                             ),
                           ],
                         ),
@@ -331,7 +373,10 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'Dueño: ${_totalUnidadesConsumoDueno.toStringAsFixed(1)} (Cortesía) | Mermas: ${_totalMermas.toStringAsFixed(1)}',
-                              style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -360,7 +405,10 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                         const SizedBox(height: 8),
                         const Text(
                           'Emita el ticket impreso en formato POS para la firma del Bartender y Supervisor o guarde la planilla en formato Excel compatible (.csv).',
-                          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         ExportPrintWidget(
@@ -404,20 +452,29 @@ class _CierreTurnoScreenState extends State<CierreTurnoScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _desgloseProductos.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1),
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
                       itemBuilder: (context, index) {
-                        final entry = _desgloseProductos.entries.elementAt(index);
+                        final entry = _desgloseProductos.entries.elementAt(
+                          index,
+                        );
                         final cant = entry.value['cantidad'] as double;
                         final tot = entry.value['total'] as double;
 
                         return ListTile(
                           title: Text(
                             entry.key,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                           subtitle: Text(
                             'Cantidad: ${cant.toStringAsFixed(0)} unidades',
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
                           ),
                           trailing: Text(
                             '\$${tot.toStringAsFixed(2)}',

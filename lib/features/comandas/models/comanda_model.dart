@@ -21,7 +21,8 @@ class ProductoBarra {
       id: json['id'] as String,
       nombre: json['nombre'] as String? ?? 'Sin nombre',
       categoria: json['categoria'] as String? ?? 'Otros',
-      precioVenta: double.tryParse(json['precio_venta']?.toString() ?? '0') ?? 0.0,
+      precioVenta:
+          double.tryParse(json['precio_venta']?.toString() ?? '0') ?? 0.0,
       esReceta: json['es_receta'] == true,
       activo: json['activo'] != false,
     );
@@ -47,6 +48,7 @@ class ComandaDetalle {
   final String nombreProducto;
   final double cantidad;
   final double precioUnitario;
+  final int ronda;
 
   ComandaDetalle({
     this.id,
@@ -55,6 +57,7 @@ class ComandaDetalle {
     required this.nombreProducto,
     required this.cantidad,
     required this.precioUnitario,
+    this.ronda = 1,
   });
 
   /// Cálculo exacto Cantidad * Precio
@@ -67,7 +70,9 @@ class ComandaDetalle {
       productoBarraId: json['producto_barra_id'] as String? ?? '',
       nombreProducto: json['nombre_producto'] as String? ?? '',
       cantidad: double.tryParse(json['cantidad']?.toString() ?? '1') ?? 1.0,
-      precioUnitario: double.tryParse(json['precio_unitario']?.toString() ?? '0') ?? 0.0,
+      precioUnitario:
+          double.tryParse(json['precio_unitario']?.toString() ?? '0') ?? 0.0,
+      ronda: int.tryParse(json['ronda']?.toString() ?? '1') ?? 1,
     );
   }
 
@@ -79,6 +84,7 @@ class ComandaDetalle {
       'nombre_producto': nombreProducto,
       'cantidad': cantidad,
       'precio_unitario': precioUnitario,
+      'ronda': ronda,
     };
   }
 }
@@ -86,34 +92,60 @@ class ComandaDetalle {
 /// Modelo Encabezado de Comanda
 class Comanda {
   final String id;
+  final String? numeroTicket;
   final DateTime fecha;
   final String nombreCliente;
   final String sedeId;
   final double precioTotal;
   final String? notas;
+  final String estado;
+  final String mesa;
+  final String mesero;
+  final int ronda;
   final List<ComandaDetalle> detalles;
 
   Comanda({
     required this.id,
+    this.numeroTicket,
     required this.fecha,
     required this.nombreCliente,
     required this.sedeId,
     required this.precioTotal,
     this.notas,
+    this.estado = 'REGISTRADA',
+    this.mesa = 'BARRA',
+    this.mesero = 'ILARIO MEDINA',
+    this.ronda = 1,
     this.detalles = const [],
   });
+
+  bool get esAbierta => estado.toUpperCase() == 'ABIERTA';
 
   factory Comanda.fromJson(Map<String, dynamic> json) {
     final detallesRaw = json['comanda_detalles'] as List<dynamic>? ?? [];
     return Comanda(
       id: json['id'] as String,
+      numeroTicket: json['numero_ticket'] as String?,
       fecha: json['fecha'] != null
           ? DateTime.tryParse(json['fecha'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      nombreCliente: json['nombre_cliente'] as String? ?? 'Cliente Barra',
+      nombreCliente:
+          json['nombre_cliente'] as String? ??
+          json['cliente'] as String? ??
+          'Cliente Barra',
       sedeId: json['sede_id'] as String? ?? '',
-      precioTotal: double.tryParse(json['precio_total']?.toString() ?? '0') ?? 0.0,
+      precioTotal:
+          double.tryParse(
+            json['precio_total']?.toString() ??
+                json['total']?.toString() ??
+                '0',
+          ) ??
+          0.0,
       notas: json['notas'] as String?,
+      estado: json['estado'] as String? ?? 'REGISTRADA',
+      mesa: json['mesa'] as String? ?? 'BARRA',
+      mesero: json['mesero'] as String? ?? 'ILARIO MEDINA',
+      ronda: int.tryParse(json['ronda']?.toString() ?? '1') ?? 1,
       detalles: detallesRaw
           .map((d) => ComandaDetalle.fromJson(d as Map<String, dynamic>))
           .toList(),

@@ -3,25 +3,25 @@ import 'package:flutter/material.dart';
 /// Tema oscuro de alto contraste optimizado para el entorno operativo de barra.
 class AppTheme {
   // Paleta de Fondos de Alto Contraste
-  static const Color background = Color(0xFF00162B);       // Midnight canvas
-  static const Color surface = Color(0xFF02283F);          // Card and bar panel
-  static const Color surfaceVariant = Color(0xFF053450);   // Elevated panels
+  static const Color background = Color(0xFF00162B); // Midnight canvas
+  static const Color surface = Color(0xFF02283F); // Card and bar panel
+  static const Color surfaceVariant = Color(0xFF053450); // Elevated panels
   static const Color surfaceHighlight = Color(0xFF0A4468); // Top brightness
-  static const Color borderLight = Color(0xFF0E4A70);      // High visibility borders
+  static const Color borderLight = Color(0xFF0E4A70); // High visibility borders
 
   // Acentos de Operación y Marca
-  static const Color primaryAmber = Color(0xFFFFB703);    // Dorado Barra
-  static const Color primaryOrange = Color(0xFFFB8500);   // Naranja Neón
-  static const Color secondaryCyan = Color(0xFF27A0D7);   // Cian Brillante
-  static const Color successMint = Color(0xFF06D6A0);     // Verde Stock Óptimo
-  static const Color warningAmber = Color(0xFFFFB703);    // Ámbar Stock Mínimo
-  static const Color errorCoral = Color(0xFFEF476F);      // Rojo Merma / Crítico
-  static const Color infoViolet = Color(0xFF8338EC);      // Púrpura
+  static const Color primaryAmber = Color(0xFFFFB703); // Dorado Barra
+  static const Color primaryOrange = Color(0xFFFB8500); // Naranja Neón
+  static const Color secondaryCyan = Color(0xFF27A0D7); // Cian Brillante
+  static const Color successMint = Color(0xFF06D6A0); // Verde Stock Óptimo
+  static const Color warningAmber = Color(0xFFFFB703); // Ámbar Stock Mínimo
+  static const Color errorCoral = Color(0xFFEF476F); // Rojo Merma / Crítico
+  static const Color infoViolet = Color(0xFF8338EC); // Púrpura
 
   // Textos y Lectura
-  static const Color textPrimary = Color(0xFFF8FAFC);     // Blanco óptico
-  static const Color textSecondary = Color(0xFFBCD3E5);   // Azul hielo secundario
-  static const Color textMuted = Color(0xFF7E9EB8);       // Texto atenuado
+  static const Color textPrimary = Color(0xFFF8FAFC); // Blanco óptico
+  static const Color textSecondary = Color(0xFFBCD3E5); // Azul hielo secundario
+  static const Color textMuted = Color(0xFF7E9EB8); // Texto atenuado
 
   /// ThemeData principal optimizado para tabletas y smartphones en barra
   static ThemeData get darkTheme {
@@ -66,7 +66,10 @@ class AppTheme {
         fillColor: surfaceVariant,
         hintStyle: const TextStyle(color: textMuted, fontSize: 14),
         labelStyle: const TextStyle(color: textSecondary, fontSize: 14),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: borderLight, width: 1.2),
@@ -108,10 +111,7 @@ class AppTheme {
           ),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: borderLight,
-        thickness: 1,
-      ),
+      dividerTheme: const DividerThemeData(color: borderLight, thickness: 1),
     );
   }
 }

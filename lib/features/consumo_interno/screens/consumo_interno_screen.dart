@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/export_print_widget.dart';
@@ -52,10 +53,14 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
     try {
       final sedeId = await SupabaseConfig.getSedePrincipalId();
       final insumos = await _service.getStockSede(sedeId);
-      final movs = await _service.getMovimientosKardex(sedeId: sedeId, limit: 30);
+      final movs = await _service.getMovimientosKardex(
+        sedeId: sedeId,
+        limit: 30,
+      );
 
       final consumos = movs.where((m) {
-        return m.tipoMovimiento == 'CONSUMO_DUENO' || m.tipoMovimiento == 'CONSUMO_TRABAJADOR';
+        return m.tipoMovimiento == 'CONSUMO_DUENO' ||
+            m.tipoMovimiento == 'CONSUMO_TRABAJADOR';
       }).toList();
 
       if (mounted) {
@@ -90,7 +95,9 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
       .fold(0.0, (acc, c) => acc + c.cantidad);
 
   Future<void> _guardarConsumoInterno() async {
-    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) return;
+    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) {
+      return;
+    }
 
     setState(() => _isSaving = true);
     try {
@@ -156,10 +163,17 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
         fecha: DateTime.now(),
         resumenKpis: {
           'Consumo Dueño': '${_totalConsumoDueno.toStringAsFixed(1)} unid',
-          'Consumo Trabajadores': '${_totalConsumoTrabajadores.toStringAsFixed(1)} unid',
+          'Consumo Trabajadores':
+              '${_totalConsumoTrabajadores.toStringAsFixed(1)} unid',
           'Total Registros': '${_historialConsumos.length}',
         },
-        columnasTabla: ['Fecha / Hora', 'Tipo', 'Insumo', 'Cantidad', 'Beneficiario / Detalle'],
+        columnasTabla: [
+          'Fecha / Hora',
+          'Tipo',
+          'Insumo',
+          'Cantidad',
+          'Beneficiario / Detalle',
+        ],
         filasTabla: filas,
       ),
     );
@@ -180,7 +194,9 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
           IconButton(
             icon: const Icon(Icons.print_outlined),
             tooltip: 'Exportar reporte de consumos',
-            onPressed: _historialConsumos.isEmpty ? null : _exportarReporteConsumos,
+            onPressed: _historialConsumos.isEmpty
+                ? null
+                : _exportarReporteConsumos,
           ),
         ],
       ),
@@ -198,14 +214,21 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.primaryAmber, width: 1.5),
+                          border: Border.all(
+                            color: AppTheme.primaryAmber,
+                            width: 1.5,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.star, color: AppTheme.primaryAmber, size: 18),
+                                Icon(
+                                  Icons.star,
+                                  color: AppTheme.primaryAmber,
+                                  size: 18,
+                                ),
                                 SizedBox(width: 6),
                                 Text(
                                   'CONSUMO DUEÑO',
@@ -227,7 +250,13 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                 color: AppTheme.textPrimary,
                               ),
                             ),
-                            const Text('Rebaja inventario • No altera ingresos', style: TextStyle(fontSize: 10, color: AppTheme.textMuted)),
+                            const Text(
+                              'Rebaja inventario • No altera ingresos',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -239,14 +268,21 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.secondaryCyan, width: 1.5),
+                          border: Border.all(
+                            color: AppTheme.secondaryCyan,
+                            width: 1.5,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.badge, color: AppTheme.secondaryCyan, size: 18),
+                                Icon(
+                                  Icons.badge,
+                                  color: AppTheme.secondaryCyan,
+                                  size: 18,
+                                ),
                                 SizedBox(width: 6),
                                 Text(
                                   'TRABAJADORES',
@@ -268,7 +304,13 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                 color: AppTheme.textPrimary,
                               ),
                             ),
-                            const Text('Rebaja inventario • Suma a ingresos', style: TextStyle(fontSize: 10, color: AppTheme.secondaryCyan)),
+                            const Text(
+                              'Rebaja inventario • Suma a ingresos',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.secondaryCyan,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -316,7 +358,8 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                               setState(() {
                                 _tipoSeleccionado = set.first;
                                 if (_tipoSeleccionado == 'CONSUMO_DUENO') {
-                                  _beneficiarioController.text = 'Dueño / Administración';
+                                  _beneficiarioController.text =
+                                      'Dueño / Administración';
                                 } else {
                                   _beneficiarioController.clear();
                                 }
@@ -331,7 +374,10 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Insumo / Bebida a Consumir *',
-                              prefixIcon: Icon(Icons.local_bar, color: AppTheme.primaryAmber),
+                              prefixIcon: Icon(
+                                Icons.local_bar,
+                                color: AppTheme.primaryAmber,
+                              ),
                             ),
                             items: _insumos.map((i) {
                               return DropdownMenuItem(
@@ -342,7 +388,8 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                 ),
                               );
                             }).toList(),
-                            onChanged: (val) => setState(() => _insumoSeleccionado = val),
+                            onChanged: (val) =>
+                                setState(() => _insumoSeleccionado = val),
                           ),
                           const SizedBox(height: 14),
 
@@ -353,15 +400,25 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                 flex: 4,
                                 child: TextFormField(
                                   controller: _cantidadController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                   decoration: InputDecoration(
                                     labelText: 'Cant. *',
                                     hintText: 'Ej. 1',
-                                    suffixText: _insumoSeleccionado?.unidadMedida ?? '',
-                                    prefixIcon: const Icon(Icons.calculate, color: AppTheme.secondaryCyan, size: 20),
+                                    suffixText:
+                                        _insumoSeleccionado?.unidadMedida ?? '',
+                                    prefixIcon: const Icon(
+                                      Icons.calculate,
+                                      color: AppTheme.secondaryCyan,
+                                      size: 20,
+                                    ),
                                   ),
                                   validator: (val) {
-                                    if (val == null || val.trim().isEmpty) return 'Requerido';
+                                    if (val == null || val.trim().isEmpty) {
+                                      return 'Requerido';
+                                    }
                                     final num? n = num.tryParse(val);
                                     if (n == null || n <= 0) return '> 0';
                                     return null;
@@ -374,13 +431,19 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                 child: TextFormField(
                                   controller: _beneficiarioController,
                                   decoration: InputDecoration(
-                                    labelText: _tipoSeleccionado == 'CONSUMO_DUENO'
+                                    labelText:
+                                        _tipoSeleccionado == 'CONSUMO_DUENO'
                                         ? 'Dueño / Mesa *'
                                         : 'Trabajador *',
-                                    hintText: _tipoSeleccionado == 'CONSUMO_DUENO'
+                                    hintText:
+                                        _tipoSeleccionado == 'CONSUMO_DUENO'
                                         ? 'Ej. Administración'
                                         : 'Ej. Bartender / Seguridad',
-                                    prefixIcon: const Icon(Icons.person, color: AppTheme.textMuted, size: 20),
+                                    prefixIcon: const Icon(
+                                      Icons.person,
+                                      color: AppTheme.textMuted,
+                                      size: 20,
+                                    ),
                                   ),
                                   validator: (val) {
                                     if (val == null || val.trim().isEmpty) {
@@ -399,8 +462,12 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                             controller: _motivoController,
                             decoration: const InputDecoration(
                               labelText: 'Motivo / Detalle (opcional)',
-                              hintText: 'Ej. Cena fin de turno / Prueba de cóctel',
-                              prefixIcon: Icon(Icons.notes, color: AppTheme.textMuted),
+                              hintText:
+                                  'Ej. Cena fin de turno / Prueba de cóctel',
+                              prefixIcon: Icon(
+                                Icons.notes,
+                                color: AppTheme.textMuted,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -408,7 +475,8 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                           // Botón de Envío
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _tipoSeleccionado == 'CONSUMO_DUENO'
+                              backgroundColor:
+                                  _tipoSeleccionado == 'CONSUMO_DUENO'
                                   ? AppTheme.primaryAmber
                                   : AppTheme.secondaryCyan,
                               foregroundColor: AppTheme.background,
@@ -418,14 +486,22 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppTheme.background,
+                                    ),
                                   )
                                 : const Icon(Icons.check, size: 20),
                             label: Text(
                               'REGISTRAR CONSUMO ATÓMICO',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
-                            onPressed: _isSaving ? null : _guardarConsumoInterno,
+                            onPressed: _isSaving
+                                ? null
+                                : _guardarConsumoInterno,
                           ),
                         ],
                       ),
@@ -461,7 +537,9 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                 else
                   ..._historialConsumos.map((c) {
                     final esDueno = c.tipoMovimiento == 'CONSUMO_DUENO';
-                    final colorBadge = esDueno ? AppTheme.primaryAmber : AppTheme.secondaryCyan;
+                    final colorBadge = esDueno
+                        ? AppTheme.primaryAmber
+                        : AppTheme.secondaryCyan;
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -476,11 +554,17 @@ class _ConsumoInternoScreenState extends State<ConsumoInternoScreen> {
                         ),
                         title: Text(
                           c.insumoNombre ?? 'Insumo',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         subtitle: Text(
                           '${DateFormat('dd/MM/yyyy HH:mm').format(c.fecha)}  •  ${c.beneficiarioOMotivo ?? ''}',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
                         ),
                         trailing: Text(
                           '-${c.cantidad.toStringAsFixed(1)}',

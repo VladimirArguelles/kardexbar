@@ -34,9 +34,12 @@ class InsumoInventario {
       sedeId: json['sede_id'] as String? ?? '',
       nombre: json['nombre'] as String? ?? 'Sin nombre',
       unidadMedida: json['unidad_medida'] as String? ?? 'unidad',
-      stockActual: double.tryParse(json['stock_actual']?.toString() ?? '0') ?? 0.0,
-      stockMinimo: double.tryParse(json['stock_minimo']?.toString() ?? '5') ?? 5.0,
-      costoUnitario: double.tryParse(json['costo_unitario']?.toString() ?? '0') ?? 0.0,
+      stockActual:
+          double.tryParse(json['stock_actual']?.toString() ?? '0') ?? 0.0,
+      stockMinimo:
+          double.tryParse(json['stock_minimo']?.toString() ?? '5') ?? 5.0,
+      costoUnitario:
+          double.tryParse(json['costo_unitario']?.toString() ?? '0') ?? 0.0,
     );
   }
 

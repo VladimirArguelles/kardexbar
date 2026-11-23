@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
 import '../theme/app_theme.dart';
 
 /// Datos estructurados para imprimir o exportar mediante [ExportPrintWidget]
@@ -62,7 +64,11 @@ class ExportPrintWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.print_outlined, color: AppTheme.primaryAmber, size: 28),
+                const Icon(
+                  Icons.print_outlined,
+                  color: AppTheme.primaryAmber,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -128,16 +134,25 @@ class ExportPrintWidget extends StatelessWidget {
                     pw.SizedBox(height: 4),
                     pw.Text(
                       data.subtitulo,
-                      style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+                      style: const pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
                     ),
                     pw.Text(
                       'Fecha de Operación: $fechaStr',
-                      style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+                      style: const pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
                     ),
                   ],
                 ),
                 pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.grey400),
                     borderRadius: pw.BorderRadius.circular(8),
@@ -188,12 +203,18 @@ class ExportPrintWidget extends StatelessWidget {
                       children: [
                         pw.Text(
                           e.key,
-                          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                          style: const pw.TextStyle(
+                            fontSize: 8,
+                            color: PdfColors.grey700,
+                          ),
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
                           e.value,
-                          style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+                          style: pw.TextStyle(
+                            fontSize: 12,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -212,20 +233,30 @@ class ExportPrintWidget extends StatelessWidget {
                 fontWeight: pw.FontWeight.bold,
                 color: PdfColors.white,
               ),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey800,
+              ),
               cellStyle: const pw.TextStyle(fontSize: 8),
               cellAlignment: pw.Alignment.centerLeft,
               rowDecoration: const pw.BoxDecoration(
-                border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5)),
+                border: pw.Border(
+                  bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
+                ),
               ),
-              cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 4,
+              ),
             ),
 
             if (data.notasPie != null) ...[
               pw.SizedBox(height: 16),
               pw.Text(
                 'Observaciones: ${data.notasPie}',
-                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                style: const pw.TextStyle(
+                  fontSize: 9,
+                  color: PdfColors.grey700,
+                ),
               ),
             ],
 
@@ -241,14 +272,20 @@ class ExportPrintWidget extends StatelessWidget {
                   children: [
                     pw.Container(width: 160, height: 1, color: PdfColors.black),
                     pw.SizedBox(height: 4),
-                    pw.Text('Bartender Operativo', style: const pw.TextStyle(fontSize: 9)),
+                    pw.Text(
+                      'Bartender Operativo',
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
                   ],
                 ),
                 pw.Column(
                   children: [
                     pw.Container(width: 160, height: 1, color: PdfColors.black),
                     pw.SizedBox(height: 4),
-                    pw.Text('Supervisor / Administración', style: const pw.TextStyle(fontSize: 9)),
+                    pw.Text(
+                      'Supervisor / Administración',
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
                   ],
                 ),
               ],
@@ -259,7 +296,8 @@ class ExportPrintWidget extends StatelessWidget {
     );
 
     final cleanName = data.titulo.replaceAll(RegExp(r'\s+'), '_');
-    final filename = '${cleanName}_${DateFormat('yyyyMMdd_HHmm').format(data.fecha)}.pdf';
+    final filename =
+        '${cleanName}_${DateFormat('yyyyMMdd_HHmm').format(data.fecha)}.pdf';
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
@@ -276,7 +314,9 @@ class ExportPrintWidget extends StatelessWidget {
 
     csv.writeln('KARDEXBAR - SISTEMA DE CONTROL DE BARRA');
     csv.writeln('${data.titulo};${data.subtitulo}');
-    csv.writeln('Fecha de Emisión;${DateFormat('dd/MM/yyyy HH:mm').format(data.fecha)}');
+    csv.writeln(
+      'Fecha de Emisión;${DateFormat('dd/MM/yyyy HH:mm').format(data.fecha)}',
+    );
     csv.writeln('');
 
     if (data.resumenKpis.isNotEmpty) {
@@ -292,26 +332,28 @@ class ExportPrintWidget extends StatelessWidget {
 
     // Filas
     for (final fila in data.filasTabla) {
-      final filaFormateada = fila.map((col) {
-        final colStr = col.replaceAll('"', '""');
-        return '"$colStr"';
-      }).join(';');
+      final filaFormateada = fila
+          .map((col) {
+            final colStr = col.replaceAll('"', '""');
+            return '"$colStr"';
+          })
+          .join(';');
       csv.writeln(filaFormateada);
     }
 
     if (data.notasPie != null) {
       csv.writeln('');
-      csv.writeln('Notas / Observaciones;"${data.notasPie!.replaceAll('"', '""')}"');
+      csv.writeln(
+        'Notas / Observaciones;"${data.notasPie!.replaceAll('"', '""')}"',
+      );
     }
 
     final Uint8List bytes = Uint8List.fromList(utf8.encode(csv.toString()));
     final cleanName = data.titulo.replaceAll(RegExp(r'\s+'), '_');
-    final filename = '${cleanName}_${DateFormat('yyyyMMdd_HHmm').format(data.fecha)}.csv';
+    final filename =
+        '${cleanName}_${DateFormat('yyyyMMdd_HHmm').format(data.fecha)}.csv';
 
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: filename,
-    );
+    await Printing.sharePdf(bytes: bytes, filename: filename);
   }
 
   @override
@@ -328,7 +370,10 @@ class ExportPrintWidget extends StatelessWidget {
           const SizedBox(width: 8),
           IconButton(
             tooltip: buttonLabelExport,
-            icon: const Icon(Icons.file_download, color: AppTheme.secondaryCyan),
+            icon: const Icon(
+              Icons.file_download,
+              color: AppTheme.secondaryCyan,
+            ),
             onPressed: () => ejecutarExportacionCsv(data),
           ),
         ],
@@ -377,11 +422,7 @@ class ExportPrintWidget extends StatelessWidget {
         if (isNarrow) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              printBtn,
-              const SizedBox(height: 10),
-              exportBtn,
-            ],
+            children: [printBtn, const SizedBox(height: 10), exportBtn],
           );
         }
 

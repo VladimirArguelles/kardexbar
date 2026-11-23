@@ -29,6 +29,26 @@ class SupabaseConfig {
   /// Instancia global del cliente de Supabase
   static SupabaseClient get client => Supabase.instance.client;
 
+  /// Indica si Supabase ya fue inicializado en el entorno actual
+  static bool get isInitialized {
+    try {
+      Supabase.instance;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Retorna la sesión activa o null de forma segura
+  static Session? get currentSession {
+    try {
+      if (!isInitialized) return null;
+      return client.auth.currentSession;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Obtiene de forma reactiva o devuelve el ID en caché de la Sede Principal
   static Future<String> getSedePrincipalId() async {
     try {

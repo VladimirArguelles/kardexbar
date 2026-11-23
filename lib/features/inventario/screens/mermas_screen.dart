@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/insumo_model.dart';
@@ -83,7 +84,9 @@ class _MermasScreenState extends State<MermasScreen> {
   }
 
   Future<void> _guardarMerma() async {
-    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) return;
+    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) {
+      return;
+    }
 
     setState(() => _isSaving = true);
     try {
@@ -132,10 +135,7 @@ class _MermasScreenState extends State<MermasScreen> {
       appBar: AppBar(
         title: const Text('Mermas y Roturas'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _cargarDatos,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _cargarDatos),
         ],
       ),
       body: _isLoading
@@ -154,7 +154,11 @@ class _MermasScreenState extends State<MermasScreen> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.report_problem, color: AppTheme.errorCoral, size: 20),
+                              Icon(
+                                Icons.report_problem,
+                                color: AppTheme.errorCoral,
+                                size: 20,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'ASENTAR PÉRDIDA O ROTURA FÍSICA',
@@ -175,7 +179,10 @@ class _MermasScreenState extends State<MermasScreen> {
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Insumo Mermado *',
-                              prefixIcon: Icon(Icons.inventory_2, color: AppTheme.errorCoral),
+                              prefixIcon: Icon(
+                                Icons.inventory_2,
+                                color: AppTheme.errorCoral,
+                              ),
                             ),
                             items: _insumos.map((i) {
                               return DropdownMenuItem(
@@ -186,22 +193,31 @@ class _MermasScreenState extends State<MermasScreen> {
                                 ),
                               );
                             }).toList(),
-                            onChanged: (val) => setState(() => _insumoSeleccionado = val),
+                            onChanged: (val) =>
+                                setState(() => _insumoSeleccionado = val),
                           ),
                           const SizedBox(height: 14),
 
                           // Cantidad mermada
                           TextFormField(
                             controller: _cantidadController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Cantidad Perdida *',
                               hintText: 'Ej. 1 o 250',
-                              suffixText: _insumoSeleccionado?.unidadMedida ?? '',
-                              prefixIcon: const Icon(Icons.remove_circle, color: AppTheme.errorCoral),
+                              suffixText:
+                                  _insumoSeleccionado?.unidadMedida ?? '',
+                              prefixIcon: const Icon(
+                                Icons.remove_circle,
+                                color: AppTheme.errorCoral,
+                              ),
                             ),
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) return 'Ingrese cantidad';
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Ingrese cantidad';
+                              }
                               final num? n = num.tryParse(val);
                               if (n == null || n <= 0) return 'Mayor a 0';
                               return null;
@@ -215,10 +231,15 @@ class _MermasScreenState extends State<MermasScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Motivo de la Merma *',
                               hintText: 'Ej. Botella rota en mesa / derrame accidental',
-                              prefixIcon: Icon(Icons.description, color: AppTheme.textMuted),
+                              prefixIcon: Icon(
+                                Icons.description,
+                                color: AppTheme.textMuted,
+                              ),
                             ),
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) return 'Especifique el motivo';
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Especifique el motivo';
+                              }
                               return null;
                             },
                           ),
@@ -230,7 +251,10 @@ class _MermasScreenState extends State<MermasScreen> {
                             runSpacing: 4,
                             children: _motivosFrecuentes.map((mot) {
                               return ActionChip(
-                                label: Text(mot, style: const TextStyle(fontSize: 10)),
+                                label: Text(
+                                  mot,
+                                  style: const TextStyle(fontSize: 10),
+                                ),
                                 backgroundColor: AppTheme.surfaceVariant,
                                 onPressed: () {
                                   setState(() {
@@ -253,12 +277,18 @@ class _MermasScreenState extends State<MermasScreen> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : const Icon(Icons.delete_outline, size: 20),
                             label: const Text(
                               'DESCONTAR MERMA EN KARDEX',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                             onPressed: _isSaving ? null : _guardarMerma,
                           ),
@@ -300,15 +330,25 @@ class _MermasScreenState extends State<MermasScreen> {
                       child: ListTile(
                         leading: const CircleAvatar(
                           backgroundColor: Color(0xFF3D1621),
-                          child: Icon(Icons.delete_forever, color: AppTheme.errorCoral, size: 20),
+                          child: Icon(
+                            Icons.delete_forever,
+                            color: AppTheme.errorCoral,
+                            size: 20,
+                          ),
                         ),
                         title: Text(
                           k.insumoNombre ?? 'Insumo',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         subtitle: Text(
                           '${DateFormat('dd/MM/yyyy HH:mm').format(k.fecha)}  •  ${k.beneficiarioOMotivo ?? ''}',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
                         ),
                         trailing: Text(
                           '-${k.cantidad.toStringAsFixed(1)}',

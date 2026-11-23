@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/insumo_model.dart';
@@ -58,7 +59,8 @@ class _EntradasScreenState extends State<EntradasScreen> {
           _insumos = insumos;
           if (_insumos.isNotEmpty && _insumoSeleccionado == null) {
             _insumoSeleccionado = _insumos.first;
-            _costoController.text = _insumoSeleccionado!.costoUnitario.toStringAsFixed(2);
+            _costoController.text = _insumoSeleccionado!.costoUnitario
+                .toStringAsFixed(2);
           }
           _ultimasEntradas = entradas;
           _isLoading = false;
@@ -78,7 +80,9 @@ class _EntradasScreenState extends State<EntradasScreen> {
   }
 
   Future<void> _guardarEntrada() async {
-    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) return;
+    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) {
+      return;
+    }
 
     setState(() => _isSaving = true);
     try {
@@ -100,7 +104,9 @@ class _EntradasScreenState extends State<EntradasScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('¡Entrada de compra registrada exitosamente en Kardex!'),
+            content: Text(
+              '¡Entrada de compra registrada exitosamente en Kardex!',
+            ),
             backgroundColor: AppTheme.successMint,
           ),
         );
@@ -131,10 +137,7 @@ class _EntradasScreenState extends State<EntradasScreen> {
       appBar: AppBar(
         title: const Text('Compras / Entradas'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _cargarDatos,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _cargarDatos),
         ],
       ),
       body: _isLoading
@@ -168,7 +171,10 @@ class _EntradasScreenState extends State<EntradasScreen> {
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Insumo a Ingresar *',
-                              prefixIcon: Icon(Icons.inventory_2, color: AppTheme.primaryAmber),
+                              prefixIcon: Icon(
+                                Icons.inventory_2,
+                                color: AppTheme.primaryAmber,
+                              ),
                             ),
                             items: _insumos.map((i) {
                               return DropdownMenuItem(
@@ -183,7 +189,8 @@ class _EntradasScreenState extends State<EntradasScreen> {
                               setState(() {
                                 _insumoSeleccionado = val;
                                 if (val != null) {
-                                  _costoController.text = val.costoUnitario.toStringAsFixed(2);
+                                  _costoController.text = val.costoUnitario
+                                      .toStringAsFixed(2);
                                 }
                               });
                             },
@@ -196,15 +203,24 @@ class _EntradasScreenState extends State<EntradasScreen> {
                               Expanded(
                                 child: TextFormField(
                                   controller: _cantidadController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                   decoration: InputDecoration(
                                     labelText: 'Cantidad *',
                                     hintText: 'Ej. 24',
-                                    suffixText: _insumoSeleccionado?.unidadMedida ?? '',
-                                    prefixIcon: const Icon(Icons.add_circle, color: AppTheme.successMint),
+                                    suffixText:
+                                        _insumoSeleccionado?.unidadMedida ?? '',
+                                    prefixIcon: const Icon(
+                                      Icons.add_circle,
+                                      color: AppTheme.successMint,
+                                    ),
                                   ),
                                   validator: (val) {
-                                    if (val == null || val.trim().isEmpty) return 'Ingrese cantidad';
+                                    if (val == null || val.trim().isEmpty) {
+                                      return 'Ingrese cantidad';
+                                    }
                                     final num? n = num.tryParse(val);
                                     if (n == null || n <= 0) return 'Mayor a 0';
                                     return null;
@@ -215,11 +231,17 @@ class _EntradasScreenState extends State<EntradasScreen> {
                               Expanded(
                                 child: TextFormField(
                                   controller: _costoController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                   decoration: const InputDecoration(
                                     labelText: 'Costo Unit (\$)',
                                     hintText: 'Ej. 1.25',
-                                    prefixIcon: Icon(Icons.attach_money, color: AppTheme.secondaryCyan),
+                                    prefixIcon: Icon(
+                                      Icons.attach_money,
+                                      color: AppTheme.secondaryCyan,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -233,7 +255,10 @@ class _EntradasScreenState extends State<EntradasScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Proveedor o Factura / Motivo',
                               hintText: 'Ej. Distribuidor Polar / Factura #402',
-                              prefixIcon: Icon(Icons.description, color: AppTheme.textMuted),
+                              prefixIcon: Icon(
+                                Icons.description,
+                                color: AppTheme.textMuted,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -249,12 +274,17 @@ class _EntradasScreenState extends State<EntradasScreen> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Icon(Icons.check, size: 20),
                             label: const Text(
                               'ASENTAR EN KARDEX',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
                             ),
                             onPressed: _isSaving ? null : _guardarEntrada,
                           ),
@@ -296,15 +326,25 @@ class _EntradasScreenState extends State<EntradasScreen> {
                       child: ListTile(
                         leading: const CircleAvatar(
                           backgroundColor: Color(0xFF0F3D33),
-                          child: Icon(Icons.arrow_downward, color: AppTheme.successMint, size: 20),
+                          child: Icon(
+                            Icons.arrow_downward,
+                            color: AppTheme.successMint,
+                            size: 20,
+                          ),
                         ),
                         title: Text(
                           k.insumoNombre ?? 'Insumo',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         subtitle: Text(
                           '${DateFormat('dd/MM/yyyy HH:mm').format(k.fecha)}  •  ${k.beneficiarioOMotivo ?? ''}',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
                         ),
                         trailing: Text(
                           '+${k.cantidad.toStringAsFixed(1)}',

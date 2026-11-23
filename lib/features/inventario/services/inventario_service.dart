@@ -35,7 +35,10 @@ class InventarioService {
       'p_proveedor_o_motivo': proveedorOMotivo.trim(),
     };
 
-    final result = await _client.rpc('registrar_entrada_compra', params: payload);
+    final result = await _client.rpc(
+      'registrar_entrada_compra',
+      params: payload,
+    );
     return Map<String, dynamic>.from(result as Map);
   }
 
@@ -55,7 +58,10 @@ class InventarioService {
       'p_motivo': motivo.trim(),
     };
 
-    final result = await _client.rpc('registrar_traslado_sedes', params: payload);
+    final result = await _client.rpc(
+      'registrar_traslado_sedes',
+      params: payload,
+    );
     return Map<String, dynamic>.from(result as Map);
   }
 
@@ -95,7 +101,10 @@ class InventarioService {
       'p_motivo': motivo,
     };
 
-    final result = await _client.rpc('registrar_consumo_interno', params: payload);
+    final result = await _client.rpc(
+      'registrar_consumo_interno',
+      params: payload,
+    );
     return Map<String, dynamic>.from(result as Map);
   }
 
@@ -115,7 +124,10 @@ class InventarioService {
       'p_sede_destino_id': sedeDestinoId,
     };
 
-    final result = await _client.rpc('registrar_movimiento_hielo', params: payload);
+    final result = await _client.rpc(
+      'registrar_movimiento_hielo',
+      params: payload,
+    );
     return Map<String, dynamic>.from(result as Map);
   }
 

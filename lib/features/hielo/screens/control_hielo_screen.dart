@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../inventario/models/insumo_model.dart';
@@ -50,7 +51,9 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
       if (mounted) {
         setState(() {
           _hieloPrincipal = stockPrincipal.firstWhere(
-            (i) => i.nombre.toLowerCase().contains('hielo') || i.unidadMedida == 'bolsa_hielo',
+            (i) =>
+                i.nombre.toLowerCase().contains('hielo') ||
+                i.unidadMedida == 'bolsa_hielo',
             orElse: () => InsumoInventario(
               id: '',
               sedeId: _sedePrincipalId,
@@ -63,7 +66,9 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
           );
 
           _hieloSecundaria = stockSecundaria.firstWhere(
-            (i) => i.nombre.toLowerCase().contains('hielo') || i.unidadMedida == 'bolsa_hielo',
+            (i) =>
+                i.nombre.toLowerCase().contains('hielo') ||
+                i.unidadMedida == 'bolsa_hielo',
             orElse: () => InsumoInventario(
               id: '',
               sedeId: _sedeSecundariaId,
@@ -116,13 +121,18 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        title: Text(titulo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: Text(
+          titulo,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: cantController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               autofocus: true,
               decoration: const InputDecoration(
                 labelText: 'Cantidad de Bolsas *',
@@ -167,7 +177,9 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Operación de hielo registrada exitosamente'),
+                      content: Text(
+                        'Operación de hielo registrada exitosamente',
+                      ),
                       backgroundColor: AppTheme.successMint,
                     ),
                   );
@@ -272,10 +284,16 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.successMint,
                                     foregroundColor: AppTheme.background,
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 6,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
-                                  onPressed: () => _mostrarModalOperacionHielo('COMPRA'),
+                                  onPressed: () =>
+                                      _mostrarModalOperacionHielo('COMPRA'),
                                   child: const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -285,7 +303,10 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                                         child: Text(
                                           'Comprar Hielo',
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                          ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -300,10 +321,16 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.secondaryCyan,
                                     foregroundColor: AppTheme.background,
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 6,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
-                                  onPressed: () => _mostrarModalOperacionHielo('TRASLADO'),
+                                  onPressed: () =>
+                                      _mostrarModalOperacionHielo('TRASLADO'),
                                   child: const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -313,7 +340,10 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                                         child: Text(
                                           'Trasladar Hielo',
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                          ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -328,10 +358,16 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.errorCoral,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 6,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
-                                  onPressed: () => _mostrarModalOperacionHielo('MERMA'),
+                                  onPressed: () =>
+                                      _mostrarModalOperacionHielo('MERMA'),
                                   child: const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -341,7 +377,10 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                                         child: Text(
                                           'Merma / Deshielo',
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                          ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -389,7 +428,8 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                     Color color;
                     String prefijo;
 
-                    if (m.tipoMovimiento == 'ENTRADA_COMPRA' || m.tipoMovimiento == 'COMPRA') {
+                    if (m.tipoMovimiento == 'ENTRADA_COMPRA' ||
+                        m.tipoMovimiento == 'COMPRA') {
                       icon = Icons.add_circle;
                       color = AppTheme.successMint;
                       prefijo = '+';
@@ -412,11 +452,17 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                         ),
                         title: Text(
                           m.beneficiarioOMotivo ?? m.tipoMovimiento,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         ),
                         subtitle: Text(
                           DateFormat('dd/MM/yyyy HH:mm').format(m.fecha),
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
                         ),
                         trailing: Text(
                           '$prefijo${m.cantidad.toStringAsFixed(0)} bolsas',
@@ -475,14 +521,21 @@ class _ControlHieloScreenState extends State<ControlHieloScreen> {
                 Icon(
                   Icons.ac_unit,
                   size: 28,
-                  color: esPrincipal ? AppTheme.primaryAmber : AppTheme.secondaryCyan,
+                  color: esPrincipal
+                      ? AppTheme.primaryAmber
+                      : AppTheme.secondaryCyan,
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: estadoColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: estadoColor.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: estadoColor.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     estadoTexto,

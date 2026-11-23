@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/config/supabase_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../main.dart';
 import 'bartender_login_screen.dart';
@@ -36,10 +38,7 @@ class _BootScreenState extends State<BootScreen>
     );
 
     _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: Curves.easeOutBack,
-      ),
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutBack),
     );
 
     _animController.forward();
@@ -74,17 +73,26 @@ class _BootScreenState extends State<BootScreen>
     if (widget.onFinished != null) {
       widget.onFinished!();
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (loginContext) => BartenderLoginScreen(
-            onLoginSuccess: () {
-              Navigator.of(loginContext).pushReplacement(
-                MaterialPageRoute(builder: (_) => const MainBarLayoutScreen()),
-              );
-            },
+      final session = SupabaseConfig.currentSession;
+      if (session != null) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainBarLayoutScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (loginContext) => BartenderLoginScreen(
+              onLoginSuccess: () {
+                Navigator.of(loginContext).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => const MainBarLayoutScreen(),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
@@ -135,11 +143,12 @@ class _BootScreenState extends State<BootScreen>
                         return Image.asset(
                           'assets/images/KardexBar-Logo-transparent.png',
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.local_bar_rounded,
-                            size: 48,
-                            color: AppTheme.primaryAmber,
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.local_bar_rounded,
+                                size: 48,
+                                color: AppTheme.primaryAmber,
+                              ),
                         );
                       },
                     ),

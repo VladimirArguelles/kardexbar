@@ -36,7 +36,8 @@ class KardexMovimiento {
       insumoId: json['insumo_id'] as String? ?? '',
       insumoNombre: insumoObj != null ? insumoObj['nombre'] as String? : null,
       insumoCostoUnitario: insumoObj != null
-          ? double.tryParse(insumoObj['costo_unitario']?.toString() ?? '0') ?? 0.0
+          ? double.tryParse(insumoObj['costo_unitario']?.toString() ?? '0') ??
+                0.0
           : 0.0,
       sedeOrigenId: json['sede_origen_id'] as String? ?? '',
       sedeDestinoId: json['sede_destino_id'] as String?,

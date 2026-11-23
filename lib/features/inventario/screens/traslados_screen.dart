@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/insumo_model.dart';
@@ -85,7 +86,9 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
   }
 
   Future<void> _ejecutarTraslado() async {
-    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) return;
+    if (!_formKey.currentState!.validate() || _insumoSeleccionado == null) {
+      return;
+    }
 
     setState(() => _isSaving = true);
     try {
@@ -145,10 +148,7 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
       appBar: AppBar(
         title: const Text('Traslados Inter-Sedes'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _cargarDatos,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _cargarDatos),
         ],
       ),
       body: _isLoading
@@ -204,15 +204,45 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                             children: [
                               Column(
                                 children: [
-                                  const Text('ORIGEN', style: TextStyle(fontSize: 10, color: AppTheme.textMuted)),
-                                  Text(nombreOrigen, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.secondaryCyan)),
+                                  const Text(
+                                    'ORIGEN',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                  Text(
+                                    nombreOrigen,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: AppTheme.secondaryCyan,
+                                    ),
+                                  ),
                                 ],
                               ),
-                              const Icon(Icons.east, color: AppTheme.primaryAmber, size: 20),
+                              const Icon(
+                                Icons.east,
+                                color: AppTheme.primaryAmber,
+                                size: 20,
+                              ),
                               Column(
                                 children: [
-                                  const Text('DESTINO', style: TextStyle(fontSize: 10, color: AppTheme.textMuted)),
-                                  Text(nombreDestino, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.successMint)),
+                                  const Text(
+                                    'DESTINO',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                  Text(
+                                    nombreDestino,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: AppTheme.successMint,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -249,8 +279,12 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                             initialValue: _insumoSeleccionado,
                             isExpanded: true,
                             decoration: InputDecoration(
-                              labelText: 'Insumo a Trasladar * (Desde $nombreOrigen)',
-                              prefixIcon: const Icon(Icons.inventory_2, color: AppTheme.secondaryCyan),
+                              labelText:
+                                  'Insumo a Trasladar * (Desde $nombreOrigen)',
+                              prefixIcon: const Icon(
+                                Icons.inventory_2,
+                                color: AppTheme.secondaryCyan,
+                              ),
                             ),
                             items: _insumosOrigen.map((i) {
                               return DropdownMenuItem(
@@ -261,25 +295,35 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                                 ),
                               );
                             }).toList(),
-                            onChanged: (val) => setState(() => _insumoSeleccionado = val),
+                            onChanged: (val) =>
+                                setState(() => _insumoSeleccionado = val),
                           ),
                           const SizedBox(height: 14),
 
                           // Cantidad a trasladar
                           TextFormField(
                             controller: _cantidadController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Cantidad a Trasladar *',
                               hintText: 'Ej. 12',
-                              suffixText: _insumoSeleccionado?.unidadMedida ?? '',
-                              prefixIcon: const Icon(Icons.send, color: AppTheme.primaryAmber),
+                              suffixText:
+                                  _insumoSeleccionado?.unidadMedida ?? '',
+                              prefixIcon: const Icon(
+                                Icons.send,
+                                color: AppTheme.primaryAmber,
+                              ),
                             ),
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) return 'Ingrese cantidad';
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Ingrese cantidad';
+                              }
                               final num? n = num.tryParse(val);
                               if (n == null || n <= 0) return 'Mayor a 0';
-                              if (_insumoSeleccionado != null && n > _insumoSeleccionado!.stockActual) {
+                              if (_insumoSeleccionado != null &&
+                                  n > _insumoSeleccionado!.stockActual) {
                                 return 'Supera el stock disponible (${_insumoSeleccionado!.stockActual})';
                               }
                               return null;
@@ -293,7 +337,10 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Motivo del Traslado',
                               hintText: 'Ej. Surtido barra / Alta demanda fin de semana',
-                              prefixIcon: Icon(Icons.notes, color: AppTheme.textMuted),
+                              prefixIcon: Icon(
+                                Icons.notes,
+                                color: AppTheme.textMuted,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -309,12 +356,18 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppTheme.background,
+                                    ),
                                   )
                                 : const Icon(Icons.swap_horiz, size: 22),
                             label: const Text(
                               'EJECUTAR TRASLADO ATÓMICO',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
                             ),
                             onPressed: _isSaving ? null : _ejecutarTraslado,
                           ),
@@ -356,15 +409,25 @@ class _TrasladosScreenState extends State<TrasladosScreen> {
                       child: ListTile(
                         leading: const CircleAvatar(
                           backgroundColor: Color(0xFF0A3045),
-                          child: Icon(Icons.swap_horiz, color: AppTheme.secondaryCyan, size: 22),
+                          child: Icon(
+                            Icons.swap_horiz,
+                            color: AppTheme.secondaryCyan,
+                            size: 22,
+                          ),
                         ),
                         title: Text(
                           k.insumoNombre ?? 'Insumo',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         subtitle: Text(
                           '${DateFormat('dd/MM/yyyy HH:mm').format(k.fecha)}  •  ${k.beneficiarioOMotivo ?? ''}',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
                         ),
                         trailing: Text(
                           '${k.cantidad.toStringAsFixed(1)} unid',

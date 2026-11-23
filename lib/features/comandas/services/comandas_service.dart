@@ -36,8 +36,97 @@ class ComandasService {
       'p_notas': notas,
     };
 
-    final result = await _client.rpc('registrar_comanda_completa', params: payload);
+    final result = await _client.rpc(
+      'registrar_comanda_completa',
+      params: payload,
+    );
     return Map<String, dynamic>.from(result as Map);
+  }
+
+  /// Despacha una ronda (para cuenta nueva o existente) mediante RPC atómica.
+  /// Descuenta de inmediato los productos del inventario y registra kardex.
+  Future<Map<String, dynamic>> despacharRonda({
+    String? comandaId,
+    required String nombreCliente,
+    String mesa = 'BARRA',
+    String mesero = 'ILARIO MEDINA',
+    required String sedeId,
+    required List<Map<String, dynamic>> items,
+    String? notas,
+  }) async {
+    final payload = {
+      'p_comanda_id': comandaId,
+      'p_nombre_cliente': nombreCliente.trim(),
+      'p_mesa': mesa.trim(),
+      'p_mesero': mesero.trim(),
+      'p_sede_id': sedeId,
+      'p_items_json': items,
+      'p_notas': notas?.trim(),
+    };
+
+    final result = await _client.rpc(
+      'despachar_comanda_ronda',
+      params: payload,
+    );
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  /// Cierra y registra definitivamente la comanda abierta cuando el cliente paga la cuenta.
+  Future<Map<String, dynamic>> cerrarComandaAbierta({
+    required String comandaId,
+    String metodoPago = 'EFECTIVO_USD',
+    String? notas,
+  }) async {
+    final payload = {
+      'p_comanda_id': comandaId,
+      'p_metodo_pago': metodoPago,
+      'p_notas': notas?.trim(),
+    };
+
+    final result = await _client.rpc('cerrar_comanda_abierta', params: payload);
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  /// Obtiene todas las comandas en estado ABIERTA para el widget de Mesas Abiertas
+  Future<List<Comanda>> getComandasAbiertas({String? sedeId}) async {
+    var query = _client
+        .from('comandas')
+        .select('''
+      id,
+      numero_ticket,
+      fecha,
+      nombre_cliente,
+      cliente,
+      sede_id,
+      precio_total,
+      total,
+      notas,
+      estado,
+      mesa,
+      mesero,
+      ronda,
+      updated_at,
+      comanda_detalles (
+        id,
+        comanda_id,
+        producto_barra_id,
+        nombre_producto,
+        cantidad,
+        precio_unitario,
+        ronda
+      )
+    ''')
+        .eq('estado', 'ABIERTA');
+
+    if (sedeId != null && sedeId.isNotEmpty) {
+      query = query.eq('sede_id', sedeId);
+    }
+
+    final response = await query.order('updated_at', ascending: false);
+
+    return (response as List<dynamic>)
+        .map((c) => Comanda.fromJson(c as Map<String, dynamic>))
+        .toList();
   }
 
   /// Obtiene el historial de comandas con soporte para doble buscador (Cliente y Producto)
@@ -48,25 +137,47 @@ class ComandasService {
   }) async {
     var query = _client.from('comandas').select('''
       id,
+      numero_ticket,
       fecha,
       nombre_cliente,
+      cliente,
       sede_id,
       precio_total,
+      total,
       notas,
+      estado,
+      mesa,
+      mesero,
+      ronda,
       comanda_detalles (
         id,
         comanda_id,
         producto_barra_id,
         nombre_producto,
         cantidad,
-        precio_unitario
+        precio_unitario,
+        ronda
       )
     ''');
 
     // Filtro por fecha si se especifica
     if (fecha != null) {
-      final inicioDia = DateTime(fecha.year, fecha.month, fecha.day, 0, 0, 0).toIso8601String();
-      final finDia = DateTime(fecha.year, fecha.month, fecha.day, 23, 59, 59).toIso8601String();
+      final inicioDia = DateTime(
+        fecha.year,
+        fecha.month,
+        fecha.day,
+        0,
+        0,
+        0,
+      ).toIso8601String();
+      final finDia = DateTime(
+        fecha.year,
+        fecha.month,
+        fecha.day,
+        23,
+        59,
+        59,
+      ).toIso8601String();
       query = query.gte('fecha', inicioDia).lte('fecha', finDia);
     }
 

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/ticket_pos_barra.dart';
 import '../models/comanda_model.dart';
 import '../services/comandas_service.dart';
 import '../widgets/mesas_abiertas_widget.dart';
@@ -788,7 +787,6 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
       final sedeId = await SupabaseConfig.getSedePrincipalId();
 
       final List<Map<String, dynamic>> itemsPayload = [];
-      final List<TicketItemData> itemsTicket = [];
 
       for (final it in _carrito.values) {
         final ProductoBarra p = it['producto'] as ProductoBarra;
@@ -821,14 +819,6 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
             'precio_unitario': precio,
           });
         }
-
-        itemsTicket.add(
-          TicketItemData(
-            cantidad: cant,
-            nombreProducto: nombre,
-            precioUnitario: precio,
-          ),
-        );
       }
 
       final resultado = await _service.despacharRonda(
@@ -842,25 +832,6 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
       );
 
       final comandaId = resultado['comanda_id']?.toString() ?? '';
-      final numeroTicket =
-          resultado['numero_ticket']?.toString() ??
-          (comandaId.length >= 8
-              ? comandaId.substring(0, 8).toUpperCase()
-              : 'BARRA');
-      final rondaNumero =
-          (resultado['ronda'] as num?)?.toInt() ?? _proximaRonda;
-
-      // Datos de ticket preparados para impresión opcional bajo demanda
-      final ticketData = TicketPosData(
-        ordenArea: mesaNombre,
-        cliente: clienteNombre,
-        mesero: meseroNombre,
-        fecha: DateTime.now(),
-        ronda: rondaNumero,
-        numeroOrden: numeroTicket,
-        items: itemsTicket,
-        notasCoordinacion: notasComanda.isEmpty ? null : notasComanda,
-      );
 
       // Recargar mesas abiertas y actualizar comanda activa
       await _cargarMesasAbiertas();
@@ -874,20 +845,6 @@ class _NuevaComandaScreenState extends State<NuevaComandaScreen> {
               .where((c) => c.id == comandaId)
               .firstOrNull;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '¡Ronda $rondaNumero despachada a cuenta de $clienteNombre! Ticket: $numeroTicket',
-            ),
-            backgroundColor: AppTheme.successMint,
-            action: SnackBarAction(
-              label: 'IMPRIMIR',
-              textColor: AppTheme.background,
-              onPressed: () => TicketPosBarra.imprimirTicket(ticketData),
-            ),
-          ),
-        );
 
         if (widget.onComandaDespachada != null) {
           widget.onComandaDespachada!();

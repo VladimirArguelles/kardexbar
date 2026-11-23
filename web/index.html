@@ -102,21 +102,40 @@
   </div>
 
   <script>
-    window.addEventListener('load', function(ev) {
-      // Remover la pantalla de booteo suavemente cuando Flutter cargue
+    function hideLoadingScreen() {
       var loader = document.getElementById('loading-screen');
       if (loader) {
+        loader.style.opacity = '0';
         setTimeout(function() {
-          loader.style.opacity = '0';
-          setTimeout(function() {
-            if (loader.parentNode) {
-              loader.parentNode.removeChild(loader);
-            }
-          }, 500);
-        }, 400);
+          if (loader.parentNode) {
+            loader.parentNode.removeChild(loader);
+          }
+        }, 500);
       }
-    });
+    }
+
+    // Ocultar la pantalla de carga ÚNICAMENTE cuando Flutter dibuje el primer frame
+    window.addEventListener('flutter-first-frame', hideLoadingScreen);
+
+    // Mensaje de progreso si la conexión móvil es lenta
+    setTimeout(function() {
+      var loaderText = document.querySelector('.boot-text');
+      if (loaderText && document.getElementById('loading-screen')) {
+        loaderText.innerText = 'Descargando módulos de barra...';
+      }
+    }, 4000);
+
+    setTimeout(function() {
+      var loaderText = document.querySelector('.boot-text');
+      if (loaderText && document.getElementById('loading-screen')) {
+        loaderText.innerText = 'Iniciando interfaz...';
+      }
+    }, 8000);
+
+    // Fallback absoluto: ocultar tras 15 segundos si el evento no llegó
+    setTimeout(hideLoadingScreen, 15000);
   </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

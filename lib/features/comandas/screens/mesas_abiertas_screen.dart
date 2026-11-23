@@ -320,6 +320,425 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
     }
   }
 
+  /// Confirma y anula/elimina una comanda abierta, restituyendo el stock a inventario
+  Future<void> _confirmarYEliminarComanda(Comanda cmd) async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppTheme.borderLight),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline, color: AppTheme.errorCoral, size: 24),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '¿Eliminar Comanda?',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Estás a punto de anular la comanda abierta de ${cmd.nombreCliente} (${cmd.mesa.toUpperCase()}).',
+              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.errorCoral.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppTheme.errorCoral.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: AppTheme.errorCoral,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Se revertirá el inventario de ${cmd.detalles.length} productos servidos (\$${cmd.precioTotal.toStringAsFixed(2)}).',
+                      style: const TextStyle(
+                        color: AppTheme.errorCoral,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorCoral,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(Icons.delete, size: 16),
+            label: const Text(
+              'Eliminar Comanda',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmado != true) return;
+
+    try {
+      await _service.eliminarComandaAbierta(cmd.id);
+      await _cargarMesas();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Comanda de ${cmd.nombreCliente} eliminada y stock restituido.',
+            ),
+            backgroundColor: AppTheme.successMint,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar comanda: $e'),
+            backgroundColor: AppTheme.errorCoral,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Permite corregir o cancelar un producto individual añadido por error a una comanda abierta
+  Future<void> _mostrarDialogoCorregirProducto(
+    Comanda cmd,
+    ComandaDetalle d,
+  ) async {
+    if (d.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se puede identificar el detalle del producto.'),
+          backgroundColor: AppTheme.errorCoral,
+        ),
+      );
+      return;
+    }
+
+    double nuevaCantidad = d.cantidad;
+    final motivoCtrl = TextEditingController(text: 'Cancelado por error');
+
+    final guardado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final esCancelacionTotal = nuevaCantidad <= 0;
+          final unidadesADevolver = d.cantidad - nuevaCantidad;
+          final nuevoSubtotal = nuevaCantidad * d.precioUnitario;
+
+          return AlertDialog(
+            backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppTheme.borderLight),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.edit_note, color: AppTheme.primaryAmber, size: 24),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Corregir / Cancelar Producto',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cliente: ${cmd.nombreCliente} • Mesa: ${cmd.mesa.toUpperCase()}',
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Tarjeta del producto
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.borderLight),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          d.nombreProducto.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Precio Unit.: \$${d.precioUnitario.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                            Text(
+                              'Subtotal act.: \$${d.subtotal.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Selector de nueva cantidad
+                  const Text(
+                    'Ajustar Cantidad en Comanda:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Botón decrementar
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppTheme.errorCoral.withValues(
+                            alpha: 0.15,
+                          ),
+                          foregroundColor: AppTheme.errorCoral,
+                        ),
+                        icon: const Icon(Icons.remove),
+                        onPressed: nuevaCantidad > 0
+                            ? () {
+                                setDialogState(() {
+                                  nuevaCantidad -= 1;
+                                  if (nuevaCantidad < 0) nuevaCantidad = 0;
+                                });
+                              }
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          children: [
+                            Text(
+                              nuevaCantidad.toInt().toString(),
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: esCancelacionTotal
+                                    ? AppTheme.errorCoral
+                                    : AppTheme.primaryAmber,
+                              ),
+                            ),
+                            Text(
+                              esCancelacionTotal
+                                  ? 'CANCELAR'
+                                  : 'Nuevo: \$${nuevoSubtotal.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: esCancelacionTotal
+                                    ? AppTheme.errorCoral
+                                    : AppTheme.successMint,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Botón incrementar (hasta la cantidad original)
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppTheme.secondaryCyan.withValues(
+                            alpha: 0.15,
+                          ),
+                          foregroundColor: AppTheme.secondaryCyan,
+                        ),
+                        icon: const Icon(Icons.add),
+                        onPressed: nuevaCantidad < d.cantidad
+                            ? () {
+                                setDialogState(() {
+                                  nuevaCantidad += 1;
+                                });
+                              }
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Mensaje de impacto de inventario
+                  if (unidadesADevolver > 0)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryAmber.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppTheme.primaryAmber.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.inventory_2_outlined,
+                            size: 16,
+                            color: AppTheme.primaryAmber,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Se devolverán ${unidadesADevolver.toInt()} unidades al stock de inventario.',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.primaryAmber,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 14),
+
+                  // Motivo de la corrección
+                  TextFormField(
+                    controller: motivoCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Motivo de la corrección / cancelación',
+                      hintText: 'Ej. Añadido por error / Cliente canceló',
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: esCancelacionTotal
+                      ? AppTheme.errorCoral
+                      : AppTheme.primaryAmber,
+                  foregroundColor: AppTheme.background,
+                ),
+                icon: Icon(
+                  esCancelacionTotal ? Icons.delete_outline : Icons.check,
+                  size: 16,
+                ),
+                label: Text(
+                  esCancelacionTotal
+                      ? 'Cancelar Producto'
+                      : 'Guardar Corrección',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (guardado != true) return;
+
+    try {
+      await _service.corregirItemComandaAbierta(
+        detalleId: d.id!,
+        nuevaCantidad: nuevaCantidad,
+        motivo: motivoCtrl.text.trim(),
+      );
+
+      await _cargarMesas();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              nuevaCantidad <= 0
+                  ? '${d.nombreProducto} cancelado y stock reincorporado al inventario.'
+                  : 'Cantidad de ${d.nombreProducto} actualizada a ${nuevaCantidad.toInt()}.',
+            ),
+            backgroundColor: AppTheme.successMint,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al corregir producto: $e'),
+          backgroundColor: AppTheme.errorCoral,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mesas = _mesasFiltradas;
@@ -656,6 +1075,17 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                   visualDensity: VisualDensity.compact,
                   onPressed: () => _imprimirTicketPrecuenta(cmd),
                 ),
+                // Botón de eliminar comanda completa
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: AppTheme.errorCoral,
+                  ),
+                  tooltip: 'Eliminar comanda',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _confirmarYEliminarComanda(cmd),
+                ),
 
                 const Spacer(),
 
@@ -788,6 +1218,33 @@ class _MesasAbiertasScreenState extends State<MesasAbiertasScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                        message: 'Corregir o cancelar producto',
+                        child: InkWell(
+                          onTap: () => _mostrarDialogoCorregirProducto(cmd, d),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryAmber.withValues(
+                                alpha: 0.12,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppTheme.primaryAmber.withValues(
+                                  alpha: 0.25,
+                                ),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.edit_outlined,
+                              size: 14,
+                              color: AppTheme.primaryAmber,
+                            ),
+                          ),
                         ),
                       ),
                     ],

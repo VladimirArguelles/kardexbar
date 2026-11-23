@@ -87,6 +87,34 @@ class ComandasService {
     return Map<String, dynamic>.from(result as Map);
   }
 
+  /// Elimina una comanda abierta y revierte el stock descontado de inventario
+  Future<Map<String, dynamic>> eliminarComandaAbierta(String comandaId) async {
+    final result = await _client.rpc(
+      'eliminar_comanda_abierta',
+      params: {'p_comanda_id': comandaId},
+    );
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  /// Corrige la cantidad de un producto o lo cancela de una comanda abierta
+  /// Si [nuevaCantidad] == 0, el ítem se cancela y se elimina del desglose.
+  /// En ambos casos se repone el stock correspondiente en inventario.
+  Future<Map<String, dynamic>> corregirItemComandaAbierta({
+    required String detalleId,
+    required double nuevaCantidad,
+    String? motivo,
+  }) async {
+    final result = await _client.rpc(
+      'corregir_item_comanda_abierta',
+      params: {
+        'p_detalle_id': detalleId,
+        'p_nueva_cantidad': nuevaCantidad,
+        'p_motivo': motivo?.trim(),
+      },
+    );
+    return Map<String, dynamic>.from(result as Map);
+  }
+
   /// Obtiene todas las comandas en estado ABIERTA para el widget de Mesas Abiertas
   Future<List<Comanda>> getComandasAbiertas({String? sedeId}) async {
     var query = _client

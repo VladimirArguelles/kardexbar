@@ -64,11 +64,24 @@ class ComandaDetalle {
   double get subtotal => cantidad * precioUnitario;
 
   factory ComandaDetalle.fromJson(Map<String, dynamic> json) {
+    final productoRel = json['productos'];
+    final nombreRel = productoRel is Map<String, dynamic>
+        ? productoRel['nombre'] as String?
+        : null;
+    final nombreDirecto = json['nombre_producto'] as String?;
+    final nombreProducto =
+        (nombreDirecto != null && nombreDirecto.trim().isNotEmpty)
+        ? nombreDirecto
+        : (nombreRel ?? '');
+
     return ComandaDetalle(
       id: json['id'] as String?,
       comandaId: json['comanda_id'] as String?,
-      productoBarraId: json['producto_barra_id'] as String? ?? '',
-      nombreProducto: json['nombre_producto'] as String? ?? '',
+      productoBarraId:
+          json['producto_barra_id'] as String? ??
+          json['producto_id'] as String? ??
+          '',
+      nombreProducto: nombreProducto,
       cantidad: double.tryParse(json['cantidad']?.toString() ?? '1') ?? 1.0,
       precioUnitario:
           double.tryParse(json['precio_unitario']?.toString() ?? '0') ?? 0.0,
@@ -124,7 +137,11 @@ class Comanda {
   bool get esAbierta => estado.toUpperCase() == 'ABIERTA';
 
   factory Comanda.fromJson(Map<String, dynamic> json) {
-    final detallesRaw = json['comanda_detalles'] as List<dynamic>? ?? [];
+    final detallesNuevos = json['comanda_detalles'] as List<dynamic>? ?? [];
+    final detallesHistoricos = json['detalle_comandas'] as List<dynamic>? ?? [];
+    final detallesRaw = detallesNuevos.isNotEmpty
+        ? detallesNuevos
+        : detallesHistoricos;
     return Comanda(
       id: json['id'] as String,
       numeroTicket: json['numero_ticket'] as String?,

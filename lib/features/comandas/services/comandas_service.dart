@@ -185,6 +185,16 @@ class ComandasService {
         cantidad,
         precio_unitario,
         ronda
+      ),
+      detalle_comandas (
+        id,
+        comanda_id,
+        producto_id,
+        cantidad,
+        precio_unitario,
+        productos (
+          nombre
+        )
       )
     ''');
 
@@ -195,9 +205,10 @@ class ComandasService {
       query = query.eq('fecha', dateStr);
     }
 
-    // Filtro 1: Buscador por Nombre de Cliente
+    // Filtro 1: Buscador por Nombre de Cliente (soporta esquema actual y registros históricos)
     if (filtroCliente != null && filtroCliente.trim().isNotEmpty) {
-      query = query.ilike('nombre_cliente', '%${filtroCliente.trim()}%');
+      final term = filtroCliente.trim().replaceAll(',', ' ');
+      query = query.or('nombre_cliente.ilike.%$term%,cliente.ilike.%$term%');
     }
 
     final response = await query
